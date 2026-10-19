@@ -8,6 +8,7 @@ import { ring, bar, icon, fmt, fmtDate, tierClass, levelChip } from "../ui.js";
 import { openTestSheet } from "./test-sheet.js";
 import { drillChips, bindDrills } from "./exercise-sheet.js";
 import { openShareSheet } from "./share.js";
+import { checkinCard, bindCheckin } from "./checkin.js";
 
 export function render(root) {
   const all = store.entries();
@@ -32,6 +33,8 @@ export function render(root) {
         <button class="btn secondary share-btn" data-act="share">${icon("upload")} Compartir con mi entrenador</button>
       </div>
     </section>
+
+    ${checkinCard()}
 
     ${shieldSummary()}
 
@@ -174,6 +177,7 @@ function renderEmpty(root) {
         </div>
       </div>
     </section>
+    ${checkinCard()}
     <a class="card shield-card" href="#blindaje">
       <span class="shield-icon">${icon("shield")}</span>
       <div class="row-main">
@@ -211,4 +215,5 @@ function bind(root) {
   });
   root.querySelectorAll("[data-test]").forEach((b) => b.addEventListener("click", () => openTestSheet(b.dataset.test)));
   bindDrills(root);
+  bindCheckin(root);
 }

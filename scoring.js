@@ -3,7 +3,8 @@
 import { TESTS, TESTS_BY_ID, CATEGORIES } from "./data/tests.js";
 import { MUSCLES, POSITION_BONUS } from "./data/muscles.js";
 import { JOINTS } from "./data/joints.js";
-import { latest, profile, currentWeight, injuries } from "./store.js";
+import { latest, profile, currentWeight, injuries, checkins } from "./store.js";
+import { WELLNESS_ITEMS } from "./data/checkin.js";
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
@@ -216,7 +217,52 @@ export function jointPriorities() {
       const gap = score == null ? 60 : 100 - score;
       const injury = jointInjury(id);
       const alerts = jointAlerts(id);
-      return { id, joint: j, score, injury, alerts, priority: j.importance * gap * (injury?.weight ?? 1) + alerts.length * 5 };
+      const pain = latestPains()[id] ?? 0;
+      return { id, joint: j, score, injury, alerts, pain, priority: j.importance * gap * (injury?.weight ?? 1) + alerts.length * 5 + pain * 3 };
     })
     .sort((a, b) => b.priority - a.priority);
+}
+
+// ---------- Check-in ----------
+
+// Bienestar 0–100 a partir de las 5 preguntas (1–5).
+export function wellness(c) {
+  const sum = WELLNESS_ITEMS.reduce((acc, it) => acc + (c[it.id] ?? 0), 0);
+  return Math.round(((sum - WELLNESS_ITEMS.length) / (WELLNESS_ITEMS.length * 4)) * 100);
+}
+
+// Carga de la semana: sesiones × esfuerzo percibido (simplificación de la carga sRPE).
+export function weeklyLoad(c) {
+  return (c.sessions ?? 0) * (c.rpe ?? 0);
+}
+
+// Dolor reportado en la última semana con check-in, por zona de blindaje.
+export function latestPains() {
+  const list = checkins();
+  return list.length ? list[list.length - 1].pains ?? {} : {};
+}
+
+// Recomendaciones a partir del check-in y la semana anterior.
+export function checkinInsights(c, prev) {
+  const out = [];
+  const w = wellness(c);
+  const minSleep = (profile()?.age ?? 30) < 18 ? 8 : 7;
+  for (const [zone, pain] of Object.entries(c.pains ?? {})) {
+    if (pain < 4) continue;
+    const name = JOINTS[zone].name.toLowerCase();
+    const repeated = (prev?.pains?.[zone] ?? 0) >= 4;
+    out.push({
+      level: pain >= 6 || repeated ? "red" : "yellow",
+      text: repeated
+        ? `Segunda semana con dolor en ${name}: consulta a tu fisio antes de seguir cargando esa zona.`
+        : `Dolor ${pain}/10 en ${name}: nada de pruebas máximas ahí esta semana; si sigue, consulta a tu fisio.`,
+    });
+  }
+  if (w < 50) out.push({ level: "yellow", text: "Semana pesada: baja la intensidad y prioriza dormir. No es buen momento para medirte." });
+  if (c.sleepHours && c.sleepHours < minSleep) out.push({ level: "yellow", text: `Dormiste ${c.sleepHours} h en promedio. Apunta a ${minSleep}+: es cuando el cuerpo se adapta al entrenamiento.` });
+  if (prev && weeklyLoad(prev) > 0 && weeklyLoad(c) > weeklyLoad(prev) * 1.3) {
+    out.push({ level: "yellow", text: "Subiste la carga más de 30 % frente a la semana pasada. Los saltos bruscos de carga aumentan el riesgo de lesión." });
+  }
+  if (!out.length && w >= 75) out.push({ level: "good", text: "Buena semana: estás fresco. Buen momento para medirte o subir un poco la intensidad." });
+  return out;
 }

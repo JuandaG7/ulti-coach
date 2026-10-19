@@ -5,14 +5,17 @@ import { MUSCLES } from "../data/muscles.js";
 import * as store from "../store.js";
 import { testScore, target, isImprovement, level, snapshot, asymmetry, asymmetryFlag, isAgeAdjusted } from "../scoring.js";
 import { openSheet } from "./sheet.js";
+import { openJumpVideo } from "./jump-video.js";
 import { WARMUP, isMaxEffort, zonesForTest } from "../data/safety.js";
 import { JOINTS, SIDES, sidePhrase } from "../data/joints.js";
 import { icon, fmt, fmtDate, today, historyChart, levelChip, tierClass, toast, summary } from "../ui.js";
 
 let editing = null; // id de la medición que se está editando
+let prefill = null; // valor que llega desde otra herramienta (p. ej. salto por video)
 
-export function openTestSheet(testId) {
+export function openTestSheet(testId, opts = {}) {
   editing = null;
+  prefill = opts.prefill ?? null;
   openSheet((root) => render(root, testId));
 }
 
@@ -60,6 +63,7 @@ function render(root, testId) {
     ${safetyBlock(test)}
 
     ${test.timer ? timerBlock(test) : ""}
+    ${testId === "vertJump" ? `<button type="button" class="btn secondary block video-measure" data-jump-video>${icon("video")} Medir con video (tiempo de vuelo)</button>` : ""}
 
     <form class="entry-form ${test.kind}">
       ${valueInputs(test)}
@@ -85,6 +89,16 @@ function render(root, testId) {
   `;
 
   bindForm(root, testId, test);
+  root.querySelector("[data-jump-video]")?.addEventListener("click", () =>
+    openJumpVideo((cm) => openTestSheet("vertJump", { prefill: cm }))
+  );
+  if (prefill != null) {
+    const input = root.querySelector(".entry-form [data-value]");
+    input.value = prefill;
+    input.closest(".field").classList.add("prefilled");
+    input.focus();
+    prefill = null;
+  }
   if (test.timer) bindTimer(root, test);
 
   root.querySelectorAll("[data-edit]").forEach((b) =>

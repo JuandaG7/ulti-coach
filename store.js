@@ -2,6 +2,8 @@
 // Medición: { id, testId, value, date: "YYYY-MM-DD", createdAt, sides?: { L, R }, reps?: [..], demo? }
 // Perfil: { name, sex: "m"|"f", age, heightCm, hand: "R"|"L", position, mode: "gym"|"casa",
 //          weights: [{ date, kg }], injuries: [{ id, zone, side, date, status: "activa"|"recuperada", note }] }
+// Check-in: { id, week: "2026-W42", date, energy, sleep, soreness, stress, mood (1–5), sleepHours,
+//             sessions, rpe (1–10), pains: { zona: 0–10 }, note }
 const KEY = "ulti-coach:v1";
 const listeners = new Set();
 
@@ -24,9 +26,9 @@ function load() {
   try {
     const raw = localStorage.getItem(KEY);
     const data = raw ? JSON.parse(raw) : { version: VERSION };
-    return migrate({ version: data.version, entries: data.entries ?? [], profile: data.profile ?? null });
+    return migrate({ version: data.version, entries: data.entries ?? [], profile: data.profile ?? null, checkins: data.checkins ?? [] });
   } catch {
-    return { version: VERSION, entries: [], profile: null };
+    return { version: VERSION, entries: [], profile: null, checkins: [] };
   }
 }
 
@@ -93,6 +95,22 @@ export function removeInjury(id) {
   save();
 }
 
+// ---------- Check-in semanal ----------
+
+export function checkins() {
+  return [...state.checkins].sort((a, b) => a.week.localeCompare(b.week));
+}
+
+export function checkinFor(week) {
+  return state.checkins.find((c) => c.week === week) ?? null;
+}
+
+// Uno por semana: guardar otra vez la misma semana la reemplaza.
+export function saveCheckin(c) {
+  state.checkins = [...state.checkins.filter((x) => x.week !== c.week), { id: crypto.randomUUID(), ...c }];
+  save();
+}
+
 // ---------- Mediciones ----------
 
 export function entries(testId) {
@@ -147,6 +165,6 @@ export function exportJSON() {
 export function importJSON(text) {
   const data = JSON.parse(text);
   if (!Array.isArray(data.entries)) throw new Error("Archivo inválido");
-  state = migrate({ version: data.version, entries: data.entries, profile: data.profile ?? state.profile });
+  state = migrate({ version: data.version, entries: data.entries, profile: data.profile ?? state.profile, checkins: data.checkins ?? state.checkins });
   save();
 }

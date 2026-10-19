@@ -3,7 +3,7 @@
 import { JOINTS, DIMENSIONS, SIDES, sidePhrase } from "../data/joints.js";
 import { TESTS_BY_ID } from "../data/tests.js";
 import * as store from "../store.js";
-import { jointPriorities, jointDimensions, asymmetryFlag } from "../scoring.js";
+import { jointPriorities, jointDimensions, asymmetryFlag, latestPains } from "../scoring.js";
 import { ring, bar, icon, levelChip, fmt, fmtDate, today, summary, lessButton } from "../ui.js";
 import { openTestSheet } from "./test-sheet.js";
 import { drillChips, bindDrills } from "./exercise-sheet.js";
@@ -61,6 +61,7 @@ function jointCard({ id, joint, score, injury, alerts }, i, mode) {
           <div class="joint-tags">
             ${score != null ? levelChip(score) : `<span class="muted small">Sin datos</span>`}
             ${injury ? `<span class="tag injury">${icon("bandage")} ${injury.status === "activa" ? "Lesión activa" : "Lesión previa"}</span>` : ""}
+            ${latestPains()[id] ? `<span class="tag pain ${latestPains()[id] >= 6 ? "high" : ""}">${icon("heart")} Dolor ${latestPains()[id]}/10 en el check-in</span>` : ""}
             ${i === 0 ? `<span class="tag focus-tag">Prioridad #1</span>` : ""}
           </div>
         </div>

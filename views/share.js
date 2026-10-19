@@ -2,7 +2,7 @@
 import { CATEGORIES, TESTS } from "../data/tests.js";
 import { JOINTS, SIDES, sidePhrase } from "../data/joints.js";
 import * as store from "../store.js";
-import { overallScore, categoryScore, level, priorities, jointPriorities, testScore, POSITIONS, ageFactor } from "../scoring.js";
+import { overallScore, categoryScore, level, priorities, jointPriorities, testScore, POSITIONS, ageFactor, wellness, weeklyLoad } from "../scoring.js";
 import { TESTS_BY_ID } from "../data/tests.js";
 import { openSheet } from "./sheet.js";
 import { icon, fmt, fmtDate, today, toast } from "../ui.js";
@@ -36,6 +36,17 @@ export function buildSummary() {
   active.forEach((i) => lines.push(`• Lesión activa: ${JOINTS[i.zone].name.toLowerCase()}${sidePhrase(i.side)}`));
   alerts.forEach((a) => lines.push(`• Asimetría: ${TESTS_BY_ID[a.testId].name}, ${a.weak === "L" ? "izquierda" : "derecha"} ${a.pct} % más débil`));
   if (!active.length && !alerts.length) lines.push("• Sin lesiones activas ni asimetrías");
+
+  const checks = store.checkins();
+  if (checks.length) {
+    const c = checks[checks.length - 1];
+    lines.push("", `CHECK-IN (semana del ${fmtDate(c.date)})`);
+    lines.push(`• Bienestar: ${wellness(c)}/100${checks.length > 1 ? ` (semana anterior: ${wellness(checks[checks.length - 2])})` : ""}`);
+    lines.push(`• Sueño: ${c.sleepHours ? `${c.sleepHours} h, ` : ""}calidad ${c.sleep}/5 · Energía ${c.energy}/5 · Ánimo ${c.mood}/5`);
+    lines.push(`• Carga: ${c.sessions ?? 0} sesiones, esfuerzo ${c.rpe}/10 (${weeklyLoad(c)})`);
+    for (const [z, p] of Object.entries(c.pains ?? {})) lines.push(`• Dolor en ${JOINTS[z].name.toLowerCase()}: ${p}/10`);
+    if (c.note) lines.push(`• Nota: ${c.note}`);
+  }
 
   lines.push("", "ÚLTIMAS MEDICIONES");
   for (const c of CATEGORIES) {
