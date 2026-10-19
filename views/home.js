@@ -2,7 +2,8 @@
 import { CATEGORIES, TESTS, TESTS_BY_ID } from "../data/tests.js";
 import { buildDemo } from "../data/demo.js";
 import * as store from "../store.js";
-import { overallScore, categoryScore, level, nextLevel, priorities, testsMeasured, isImprovement, POSITIONS } from "../scoring.js";
+import { overallScore, categoryScore, level, nextLevel, priorities, testsMeasured, isImprovement, POSITIONS, jointPriorities } from "../scoring.js";
+import { SIDES } from "../data/joints.js";
 import { ring, bar, icon, fmt, fmtDate, tierClass, levelChip } from "../ui.js";
 import { openTestSheet } from "./test-sheet.js";
 
@@ -28,6 +29,8 @@ export function render(root) {
         ${nextLevelHint(overall)}
       </div>
     </section>
+
+    ${shieldSummary()}
 
     <section>
       <h2 class="section-title">Tu foco ahora</h2>
@@ -63,6 +66,28 @@ export function render(root) {
   `;
 
   bind(root);
+}
+
+// Resumen de blindaje: la zona más vulnerable, alertas de asimetría y lesiones activas.
+function shieldSummary() {
+  const list = jointPriorities();
+  const top = list[0];
+  // Una prueba puede contar para dos zonas (p. ej. salto a una pierna: tobillo y rodilla): se cuenta una vez.
+  const alerts = new Set(list.flatMap((j) => j.alerts.map((a) => a.testId))).size;
+  const active = store.injuries().filter((i) => i.status === "activa");
+  return `
+    <a class="card shield-card" href="#blindaje">
+      <span class="shield-icon">${icon("shield")}</span>
+      <div class="row-main">
+        <span class="eyebrow">Blindaje</span>
+        <span class="shield-title">Zona a cuidar: <strong>${top.joint.name}</strong>${top.score != null ? ` · ${top.score}` : ""}</span>
+        <span class="muted small">${[
+          active.length ? `${active.length} lesión activa` : "",
+          alerts ? `${alerts} alerta${alerts > 1 ? "s" : ""} de asimetría` : "Sin alertas de asimetría",
+        ].filter(Boolean).join(" · ")}</span>
+      </div>
+      ${icon("chevron", "muted")}
+    </a>`;
 }
 
 function nextLevelHint(score) {

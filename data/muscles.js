@@ -43,7 +43,7 @@ export const MUSCLES = {
   },
   calves: {
     name: "Pantorrillas", importance: 0.9,
-    tests: { calfRaise: 0.6, kneeToWall: 0.4 },
+    tests: { calfRaise: 0.5, kneeToWall: 0.3, tibialisRaise: 0.2 },
     why: "Primer contacto en cada paso rápido: reaccionan al piso y protegen el tendón de Aquiles.",
     drills: {
       gym: ["Elevación de talón con peso 4×10", "Elevación sentado (sóleo) 3×12", "Saltos de pogo 3×20"],

@@ -6,9 +6,10 @@ import * as body from "./views/body.js";
 import * as tests from "./views/tests.js";
 import * as video from "./views/video.js";
 import * as profile from "./views/profile.js";
+import * as blindaje from "./views/blindaje.js";
 import { profile as getProfile } from "./store.js";
 
-const ROUTES = { inicio: home, cuerpo: body, pruebas: tests, video, perfil: profile };
+const ROUTES = { inicio: home, cuerpo: body, blindaje, pruebas: tests, video, perfil: profile };
 const view = document.getElementById("view");
 let current = null;
 

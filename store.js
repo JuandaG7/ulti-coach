@@ -1,6 +1,7 @@
 // Guarda perfil y mediciones en este dispositivo (localStorage).
-// Medición: { id, testId, value, date: "YYYY-MM-DD", createdAt, demo? }
-// Perfil: { name, sex: "m"|"f", age, heightCm, hand: "R"|"L", position, mode: "gym"|"casa", weights: [{ date, kg }] }
+// Medición: { id, testId, value, date: "YYYY-MM-DD", createdAt, sides?: { L, R }, reps?: [..], demo? }
+// Perfil: { name, sex: "m"|"f", age, heightCm, hand: "R"|"L", position, mode: "gym"|"casa",
+//          weights: [{ date, kg }], injuries: [{ id, zone, side, date, status: "activa"|"recuperada", note }] }
 const KEY = "ulti-coach:v1";
 const listeners = new Set();
 
@@ -55,6 +56,23 @@ export function addWeight(kg, date) {
   save();
 }
 
+// ---------- Lesiones ----------
+
+export function injuries() {
+  return [...(state.profile?.injuries ?? [])].sort((a, b) => b.date.localeCompare(a.date));
+}
+
+export function saveInjury(injury) {
+  const list = (state.profile.injuries ?? []).filter((i) => i.id !== injury.id);
+  state.profile = { ...state.profile, injuries: [...list, { id: crypto.randomUUID(), ...injury }] };
+  save();
+}
+
+export function removeInjury(id) {
+  state.profile = { ...state.profile, injuries: (state.profile.injuries ?? []).filter((i) => i.id !== id) };
+  save();
+}
+
 // ---------- Mediciones ----------
 
 export function entries(testId) {
@@ -72,13 +90,14 @@ export function latest(testId) {
   return list[list.length - 1] ?? null;
 }
 
-export function addEntry(testId, value, date) {
-  state.entries.push({ id: crypto.randomUUID(), testId, value, date, createdAt: Date.now() });
+// extra: { sides: { L, R } } en pruebas bilaterales o { reps: [...] } en pruebas de repeticiones.
+export function addEntry(testId, value, date, extra = {}) {
+  state.entries.push({ id: crypto.randomUUID(), testId, value, date, createdAt: Date.now(), ...extra });
   save();
 }
 
-export function updateEntry(id, value, date) {
-  state.entries = state.entries.map((e) => (e.id === id ? { ...e, value, date } : e));
+export function updateEntry(id, value, date, extra = {}) {
+  state.entries = state.entries.map((e) => (e.id === id ? { ...e, value, date, ...extra } : e));
   save();
 }
 
