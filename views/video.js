@@ -154,9 +154,9 @@ function wire() {
     const f = frames[i];
     if (!f?.landmarks) return;
     const scale = overlay.width / 400;
-    drawer.drawConnectors(f.landmarks, pose.PoseLandmarker.POSE_CONNECTIONS, { color: "#2ee6c8", lineWidth: 2 * scale });
+    drawer.drawConnectors(f.landmarks, pose.PoseLandmarker.POSE_CONNECTIONS, { color: "#4a9dff", lineWidth: 2 * scale });
     drawer.drawLandmarks(f.landmarks, { color: "#f8fafc", radius: 2 * scale });
-    drawer.drawLandmarks([f.landmarks[LM.R_WRIST]], { color: "#f5a524", radius: 5 * scale });
+    drawer.drawLandmarks([f.landmarks[LM.R_WRIST]], { color: "#6fd3ff", radius: 5 * scale });
   }
 
   function drawChart() {
@@ -176,21 +176,21 @@ function wire() {
     const x = (t) => pad + (t / video.duration) * (w - 2 * pad);
     const y = (v) => h - pad - (v / maxV) * (h - 2 * pad);
 
-    ctx.strokeStyle = "#2ee6c8";
+    ctx.strokeStyle = "#4a9dff";
     ctx.lineWidth = 2;
     ctx.beginPath();
     wristSpeed.forEach((p, i) => (i ? ctx.lineTo(x(p.t), y(p.v)) : ctx.moveTo(x(p.t), y(p.v))));
     ctx.stroke();
 
     const peak = wristSpeed.reduce((a, b) => (b.v > a.v ? b : a));
-    ctx.fillStyle = "#f5a524";
+    ctx.fillStyle = "#6fd3ff";
     ctx.beginPath();
     ctx.arc(x(peak.t), y(peak.v), 4, 0, Math.PI * 2);
     ctx.fill();
     ctx.font = "12px Inter, sans-serif";
     ctx.fillText(`pico ${peak.v.toFixed(1)}`, Math.min(x(peak.t) + 6, w - 60), y(peak.v) + 12);
 
-    ctx.strokeStyle = "#8b9bb4";
+    ctx.strokeStyle = "#9aa3b5";
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(x(video.currentTime), 0);

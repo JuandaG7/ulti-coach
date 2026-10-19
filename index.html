@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Ulti Coach</title>
   <meta name="color-scheme" content="dark">
-  <meta name="theme-color" content="#0a0f1a">
+  <meta name="theme-color" content="#000000">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Ulti Coach">
@@ -13,13 +13,14 @@
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="app">
     <div class="topbar">
       <span class="brand"><span class="brand-mark" aria-hidden="true"></span>ULTI COACH</span>
+      <a class="profile-btn" href="#perfil" aria-label="Tu perfil"><span data-icon="user"></span></a>
     </div>
 
     <main id="view" tabindex="-1"></main>
@@ -31,6 +32,8 @@
       <a href="#video" data-tab="video"><span data-icon="video"></span><span>Video</span></a>
     </nav>
   </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
   <dialog id="sheet" class="sheet" aria-label="Detalle">
     <div class="sheet-body"></div>

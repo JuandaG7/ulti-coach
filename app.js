@@ -5,8 +5,10 @@ import * as home from "./views/home.js";
 import * as body from "./views/body.js";
 import * as tests from "./views/tests.js";
 import * as video from "./views/video.js";
+import * as profile from "./views/profile.js";
+import { profile as getProfile } from "./store.js";
 
-const ROUTES = { inicio: home, cuerpo: body, pruebas: tests, video };
+const ROUTES = { inicio: home, cuerpo: body, pruebas: tests, video, perfil: profile };
 const view = document.getElementById("view");
 let current = null;
 
@@ -17,7 +19,12 @@ if ("serviceWorker" in navigator) {
 }
 
 function route() {
-  const [name, param] = location.hash.slice(1).split("/");
+  let [name, param] = location.hash.slice(1).split("/");
+  // Sin perfil, lo primero es la bienvenida (por ejemplo, alguien que abre el link por primera vez).
+  if (!getProfile() && name !== "perfil") {
+    history.replaceState(null, "", "#perfil/bienvenida");
+    [name, param] = ["perfil", "bienvenida"];
+  }
   const next = ROUTES[name] ? name : "inicio";
   if (current && current !== next) ROUTES[current].leave?.();
   const changedTab = current !== next;
@@ -26,6 +33,7 @@ function route() {
   view.replaceChildren();
   ROUTES[next].render(view, param);
 
+  document.body.classList.toggle("onboarding", !getProfile());
   document.querySelectorAll("[data-tab]").forEach((a) => {
     if (a.dataset.tab === next) a.setAttribute("aria-current", "page");
     else a.removeAttribute("aria-current");

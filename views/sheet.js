@@ -9,7 +9,12 @@ let current = null;
 dialog.addEventListener("click", (e) => {
   if (e.target === dialog) closeSheet();
 });
-dialog.addEventListener("close", () => (current = null));
+dialog.addEventListener("close", () => {
+  current = null;
+  // Si quedó un aviso dentro de la hoja, lo devolvemos a la página.
+  const t = document.getElementById("toast");
+  if (t && dialog.contains(t)) document.body.append(t);
+});
 
 // Si cambian los datos con la hoja abierta, se vuelve a dibujar.
 onChange(() => current && paint());

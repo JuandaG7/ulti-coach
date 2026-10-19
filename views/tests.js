@@ -2,7 +2,7 @@
 import { CATEGORIES, TESTS } from "../data/tests.js";
 import { entries } from "../store.js";
 import { categoryScore, testScore } from "../scoring.js";
-import { sparkline, fmt, fmtDate, icon, tierClass } from "../ui.js";
+import { sparkline, fmt, fmtDate, icon, tierClass, levelChip } from "../ui.js";
 import { openTestSheet } from "./test-sheet.js";
 
 export function render(root, filter) {
@@ -25,7 +25,7 @@ export function render(root, filter) {
         <section>
           <div class="section-title-row">
             <h2 class="section-title">${c.name}</h2>
-            <span class="num score ${tierClass(s)} tier-text">${s ?? "–"}</span>
+            <span class="row-score"><span class="num score">${s ?? "–"}</span>${s != null ? levelChip(s) : ""}</span>
           </div>
           <div class="card list">
             ${TESTS.filter((t) => t.cat === c.id).map(testRow).join("")}
@@ -46,10 +46,10 @@ function testRow(t) {
   return `
     <button class="row test-row" data-test="${t.id}">
       <div class="row-main">
-        <span>${t.name}</span>
+        <span>${t.name}${t.timer ? ` <span class="timer-tag" title="Con cronómetro">${icon("timer")}</span>` : ""}</span>
         <span class="muted small">${last ? fmtDate(last.date) : "Sin medir"}</span>
       </div>
-      <span class="trend ${tierClass(score)} tier-text">${trend}</span>
+      <span class="trend">${trend}</span>
       ${last
         ? `<span class="num value">${fmt(last.value, t.decimals)}<small>${t.unit}</small></span>
            <span class="badge ${tierClass(score)}">${score}</span>`

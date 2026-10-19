@@ -112,4 +112,34 @@ export const TESTS = [
   },
 ];
 
+// Metas para mujeres [base, élite]. Las pruebas que no aparecen usan las mismas metas.
+// Igual que las de arriba: referencias aproximadas, ajustables.
+const FEMALE_TARGETS = {
+  sprint10: [2.2, 1.8],
+  sprint40: [6.3, 5.3],
+  proAgility: [5.8, 4.8],
+  test505: [3.0, 2.45],
+  vertJump: [30, 52],
+  broadJump: [160, 235],
+  yoyo: [500, 1600],
+  fhDistance: [22, 50],
+  bhDistance: [25, 58],
+  fhSpeed: [40, 80],
+  nordic: [0, 6],
+  copenhagen: [12, 50],
+  pistol: [0, 8],
+  calfRaise: [12, 30],
+  sidePlank: [40, 100],
+  pullups: [0, 8],
+  pushups: [8, 35],
+  deadHang: [20, 70],
+};
+
+for (const t of TESTS) {
+  const f = FEMALE_TARGETS[t.id];
+  t.targets = { m: { base: t.base, elite: t.elite }, f: f ? { base: f[0], elite: f[1] } : { base: t.base, elite: t.elite } };
+  // Pruebas de aguantar tiempo: se pueden medir con el cronómetro de la app.
+  t.timer = t.unit === "s" && t.cat === "fuerza";
+}
+
 export const TESTS_BY_ID = Object.fromEntries(TESTS.map((t) => [t.id, t]));

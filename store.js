@@ -1,14 +1,16 @@
-// Guarda las mediciones en este dispositivo (localStorage).
-// Cada medición: { id, testId, value, date: "YYYY-MM-DD", demo? }
+// Guarda perfil y mediciones en este dispositivo (localStorage).
+// Medición: { id, testId, value, date: "YYYY-MM-DD", createdAt, demo? }
+// Perfil: { name, sex: "m"|"f", age, heightCm, hand: "R"|"L", position, mode: "gym"|"casa", weights: [{ date, kg }] }
 const KEY = "ulti-coach:v1";
 const listeners = new Set();
 
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
-    return raw ? JSON.parse(raw) : { entries: [] };
+    const data = raw ? JSON.parse(raw) : {};
+    return { entries: data.entries ?? [], profile: data.profile ?? null };
   } catch {
-    return { entries: [] };
+    return { entries: [], profile: null };
   }
 }
 
@@ -27,6 +29,34 @@ export function onChange(fn) {
   listeners.add(fn);
 }
 
+// ---------- Perfil ----------
+
+export function profile() {
+  return state.profile;
+}
+
+export function saveProfile(p) {
+  state.profile = { ...state.profile, ...p };
+  save();
+}
+
+export function weights() {
+  return [...(state.profile?.weights ?? [])].sort((a, b) => a.date.localeCompare(b.date));
+}
+
+export function currentWeight() {
+  const w = weights();
+  return w.length ? w[w.length - 1].kg : null;
+}
+
+export function addWeight(kg, date) {
+  const list = (state.profile.weights ?? []).filter((w) => w.date !== date);
+  state.profile = { ...state.profile, weights: [...list, { date, kg }] };
+  save();
+}
+
+// ---------- Mediciones ----------
+
 export function entries(testId) {
   // Orden cronológico: por fecha y, dentro del mismo día, por el momento en que se registró.
   // (Las mediciones viejas sin createdAt conservan su orden de registro gracias al índice.)
@@ -44,6 +74,11 @@ export function latest(testId) {
 
 export function addEntry(testId, value, date) {
   state.entries.push({ id: crypto.randomUUID(), testId, value, date, createdAt: Date.now() });
+  save();
+}
+
+export function updateEntry(id, value, date) {
+  state.entries = state.entries.map((e) => (e.id === id ? { ...e, value, date } : e));
   save();
 }
 
@@ -73,6 +108,6 @@ export function exportJSON() {
 export function importJSON(text) {
   const data = JSON.parse(text);
   if (!Array.isArray(data.entries)) throw new Error("Archivo inválido");
-  state = { entries: data.entries };
+  state = { entries: data.entries, profile: data.profile ?? state.profile };
   save();
 }

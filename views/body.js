@@ -2,9 +2,9 @@
 import { FRONT, BACK } from "../data/body-map.js";
 import { MUSCLES, SVG_TO_MUSCLE } from "../data/muscles.js";
 import { TESTS_BY_ID } from "../data/tests.js";
-import { latest } from "../store.js";
-import { muscleScore, testScore, level, priorities } from "../scoring.js";
-import { ring, bar, icon, fmt, tierClass } from "../ui.js";
+import { latest, profile } from "../store.js";
+import { muscleScore, testScore, level, nextLevel, priorities, target, muscleImportance, LEVELS } from "../scoring.js";
+import { ring, bar, icon, fmt, tierClass, levelChip } from "../ui.js";
 import { openTestSheet } from "./test-sheet.js";
 
 const SIDES = { front: FRONT, back: BACK };
@@ -21,7 +21,7 @@ export function render(root, selected) {
   root.innerHTML = `
     <header class="page-head">
       <h1 class="display">Cuerpo</h1>
-      <p class="muted small">Cada músculo se califica con las pruebas que lo miden, contra el nivel élite.</p>
+      <p class="muted small">Cada músculo se califica con las pruebas que lo miden, contra el nivel Excelente.</p>
     </header>
 
     <div class="body-layout">
@@ -32,10 +32,7 @@ export function render(root, selected) {
         </div>
         ${bodySvg(selected)}
         <ul class="legend">
-          <li><i class="tier-developing"></i>En desarrollo</li>
-          <li><i class="tier-competitive"></i>Competitivo</li>
-          <li><i class="tier-advanced"></i>Avanzado</li>
-          <li><i class="tier-elite"></i>Élite</li>
+          ${LEVELS.map((l) => `<li><i class="tier-${l.id}"></i>${l.name}</li>`).join("")}
           <li><i class="tier-none"></i>Sin datos</li>
         </ul>
       </section>
@@ -51,7 +48,7 @@ export function render(root, selected) {
         ${priorities().map(({ id, muscle, score }) => `
           <a class="row muscle-row ${id === selected ? "selected" : ""}" href="#cuerpo/${id}">
             <div class="row-main">
-              <div class="row-head"><span>${muscle.name}</span><span class="num score ${tierClass(score)} tier-text">${score ?? "–"}</span></div>
+              <div class="row-head"><span>${muscle.name}</span><span class="row-score"><span class="num score">${score ?? "–"}</span>${score != null ? levelChip(score) : ""}</span></div>
               ${bar(score)}
             </div>
             ${icon("chevron", "muted")}
@@ -93,7 +90,10 @@ function bodySvg(selected) {
 function detail(id) {
   const m = MUSCLES[id];
   const score = muscleScore(id);
-  const importance = m.importance >= 0.9 ? "Crítica" : m.importance >= 0.6 ? "Alta" : "Media";
+  const imp = muscleImportance(id);
+  const importance = imp >= 0.9 ? "Crítica" : imp >= 0.6 ? "Alta" : "Media";
+  const mode = profile()?.mode ?? "casa";
+  const next = nextLevel(score);
 
   return `
     <div class="detail-head">
@@ -101,7 +101,7 @@ function detail(id) {
       <div>
         <p class="eyebrow">Importancia en ultimate: ${importance}</p>
         <h2 class="detail-title">${m.name}</h2>
-        <p class="small ${tierClass(score)} tier-text">${score == null ? "Sin datos todavía" : score >= 100 ? "Nivel élite alcanzado" : `${level(score).name} · te faltan ${100 - score} puntos para élite`}</p>
+        <div class="detail-level">${score == null ? `<span class="muted small">Sin datos todavía</span>` : `${levelChip(score)}<span class="muted small">${next ? `${next.min - score} pts para ${next.name}` : "Nivel máximo"}</span>`}</div>
       </div>
     </div>
 
@@ -119,7 +119,7 @@ function detail(id) {
               <div class="row-main">
                 <div class="row-head">
                   <span>${t.name} <span class="muted small">· ${Math.round(w * 100)} %</span></span>
-                  <span class="small">${e ? `<span class="num">${fmt(e.value, t.decimals)}</span> / ${fmt(t.elite, t.decimals)} ${t.unit}` : `<span class="accent">Medir</span>`}</span>
+                  <span class="small">${e ? `<span class="num">${fmt(e.value, t.decimals)}</span> / ${fmt(target(testId).elite, t.decimals)} ${t.unit}` : `<span class="accent">Medir</span>`}</span>
                 </div>
                 ${bar(s)}
               </div>
@@ -128,7 +128,7 @@ function detail(id) {
       }).join("")}
     </ul>
 
-    <h3 class="subhead">Para subirlo</h3>
-    <ul class="chips">${m.drills.map((d) => `<li>${d}</li>`).join("")}</ul>
+    <h3 class="subhead">Para subirlo · ${mode === "gym" ? "gimnasio" : "casa"}</h3>
+    <ul class="chips">${m.drills[mode].map((d) => `<li>${d}</li>`).join("")}</ul>
   `;
 }
