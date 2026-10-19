@@ -42,6 +42,15 @@ function route() {
   if (changedTab) window.scrollTo(0, 0);
 }
 
+// "Ver menos": cierra la sección desplegable y deja su título a la vista.
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-collapse]");
+  if (!btn) return;
+  const details = btn.closest("details");
+  details.open = false;
+  details.querySelector("summary").scrollIntoView({ behavior: "smooth", block: "nearest" });
+});
+
 window.addEventListener("hashchange", route);
 onChange(() => current !== "video" && route());
 route();

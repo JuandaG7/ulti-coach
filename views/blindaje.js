@@ -4,7 +4,7 @@ import { JOINTS, DIMENSIONS, SIDES, sidePhrase } from "../data/joints.js";
 import { TESTS_BY_ID } from "../data/tests.js";
 import * as store from "../store.js";
 import { jointPriorities, jointDimensions, asymmetryFlag } from "../scoring.js";
-import { ring, bar, icon, levelChip, fmt, fmtDate, today } from "../ui.js";
+import { ring, bar, icon, levelChip, fmt, fmtDate, today, summary, lessButton } from "../ui.js";
 import { openTestSheet } from "./test-sheet.js";
 import { drillChips, bindDrills } from "./exercise-sheet.js";
 import { openSheet, closeSheet } from "./sheet.js";
@@ -92,13 +92,14 @@ function jointCard({ id, joint, score, injury, alerts }, i, mode) {
         </ul>` : ""}
 
       <details class="joint-more" ${i === 0 ? "open" : ""}>
-        <summary>Por qué importa y qué hacer</summary>
+        ${summary("Por qué importa y qué hacer")}
         <p class="why">${joint.why}</p>
         <h3 class="subhead">Blindaje · ${mode === "gym" ? "gimnasio" : "casa"}</h3>
         ${drillChips(joint.drills[mode])}
         ${missing.length ? `
           <h3 class="subhead">Falta medir</h3>
           <div class="btn-row">${missing.map((t) => `<button class="add-pill" data-test="${t}">${icon("plus")} ${TESTS_BY_ID[t].name}</button>`).join("")}</div>` : ""}
+        ${lessButton()}
       </details>
     </article>`;
 }

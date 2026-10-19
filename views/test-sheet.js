@@ -7,7 +7,7 @@ import { testScore, target, isImprovement, level, snapshot, asymmetry, asymmetry
 import { openSheet } from "./sheet.js";
 import { WARMUP, isMaxEffort, zonesForTest } from "../data/safety.js";
 import { JOINTS, SIDES, sidePhrase } from "../data/joints.js";
-import { icon, fmt, fmtDate, today, historyChart, levelChip, tierClass, toast } from "../ui.js";
+import { icon, fmt, fmtDate, today, historyChart, levelChip, tierClass, toast, summary } from "../ui.js";
 
 let editing = null; // id de la medición que se está editando
 
@@ -72,7 +72,7 @@ function render(root, testId) {
     </form>
 
     <details class="protocol" ${list.length ? "" : "open"}>
-      <summary>Cómo hacer la prueba</summary>
+      ${summary("Cómo hacer la prueba")}
       <p>${test.how}</p>
     </details>
     <a class="btn secondary block video-btn" href="https://www.youtube.com/results?search_query=${encodeURIComponent(test.video)}" target="_blank" rel="noopener">${icon("video")} Ver cómo se hace en YouTube</a>

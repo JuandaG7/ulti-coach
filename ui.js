@@ -141,6 +141,16 @@ export function historyChart(list, test, tgt) {
   </svg>`;
 }
 
+// Secciones desplegables: el título siempre visible y a la derecha "Ver más" / "Ver menos".
+export function summary(label) {
+  return `<summary><span class="summary-label">${label}</span><span class="toggle"><span class="when-closed">Ver más</span><span class="when-open">Ver menos</span>${icon("down")}</span></summary>`;
+}
+
+// Botón al final del contenido para cerrar sin tener que volver arriba.
+export function lessButton() {
+  return `<button type="button" class="less-btn" data-collapse>${icon("up")} Ver menos</button>`;
+}
+
 // Aviso flotante (toast) que se oculta solo.
 let toastTimer = null;
 export function toast(html, ms = 6500) {

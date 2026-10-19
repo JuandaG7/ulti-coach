@@ -2,7 +2,7 @@
 import { CATEGORIES, TESTS } from "../data/tests.js";
 import { entries } from "../store.js";
 import { categoryScore, testScore } from "../scoring.js";
-import { sparkline, fmt, fmtDate, icon, tierClass, levelChip } from "../ui.js";
+import { sparkline, fmt, fmtDate, icon, tierClass, levelChip, summary, lessButton } from "../ui.js";
 import { openTestSheet } from "./test-sheet.js";
 import { WARMUP, SAFETY } from "../data/safety.js";
 
@@ -16,11 +16,12 @@ export function render(root, filter) {
     </header>
 
     <details class="card warmup-card">
-      <summary>${icon("zap")} Antes de medirte: calentamiento y seguridad</summary>
+      ${summary(`${icon("zap")} Antes de medirte: calentamiento y seguridad`)}
       <h3 class="subhead">Calentamiento · 10 min</h3>
       <ol class="warmup-steps">${WARMUP.map((w) => `<li><strong>${w.title}</strong><span>${w.text}</span></li>`).join("")}</ol>
       <h3 class="subhead">Seguridad</h3>
       <ul class="safety-list">${SAFETY.map((r) => `<li>${icon("shield")}<span>${r}</span></li>`).join("")}</ul>
+      ${lessButton()}
     </details>
 
     <nav class="filter-chips" aria-label="Filtrar por categoría">
