@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="6 46 186 132">
+  <!-- Marca sin fondo para el encabezado de la app (misma pintura que logo.svg). -->
+  <defs>
+    <filter id="oil" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035 0.09" numOctaves="3" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="7" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="oilFine" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.08 0.22" numOctaves="2" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="2.6" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="oilEdge" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.05 0.12" numOctaves="2" seed="11" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3.4" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+
+
+  <g transform="translate(100 102) scale(1.0) translate(-96 -112)">
+
+  <!-- Estela: la pincelada del lanzamiento, seca al final -->
+  <g filter="url(#oil)">
+    <path d="M26 162 C64 160 102 142 128 110 C132 105 140 107 137 114 C110 152 70 170 30 170 C22 170 20 163 26 162 Z" fill="#efe6d2"/>
+  </g>
+  <g filter="url(#oilFine)" fill="none" stroke="#efe6d2" stroke-linecap="round">
+    <path d="M14 158 C50 156 90 142 120 112" stroke-width="2.4" stroke-dasharray="46 7 22 5 60" opacity=".75"/>
+    <path d="M20 175 C60 174 98 158 124 124" stroke-width="2" stroke-dasharray="30 9 50 6" opacity=".6"/>
+    <path d="M8 166 C46 165 86 150 114 120" stroke-width="1.4" stroke-dasharray="18 10 26 8" opacity=".45"/>
+  </g>
+  <g filter="url(#oilFine)" stroke="#a99b78" stroke-width="1.1" fill="none" opacity=".6">
+    <path d="M40 164 C78 160 110 142 130 112"/>
+    <path d="M60 166 C92 160 116 142 132 118"/>
+  </g>
+
+  <!-- Disco: pestaña, cara, anillos de vuelo y brillo -->
+  <g transform="translate(-7 9) translate(144 70) scale(1.12) translate(-144 -70) rotate(-18 144 70)">
+    <g filter="url(#oilEdge)">
+      <ellipse cx="144" cy="76" rx="36" ry="17" fill="#8c805f"/>
+      <rect x="108" y="70" width="72" height="6" fill="#8c805f"/>
+      <ellipse cx="144" cy="70" rx="36" ry="17" fill="#efe6d2"/>
+    </g>
+    <g filter="url(#oilFine)" fill="none" stroke-linecap="round">
+      <path d="M110 78 C122 92 166 92 178 78" stroke="#5f563f" stroke-width="1.6" opacity=".7"/>
+      <ellipse cx="144" cy="70" rx="29" ry="13.2" stroke="#b9ab86" stroke-width="1.6" opacity=".9"/>
+      <ellipse cx="144" cy="70" rx="25.5" ry="11.3" stroke="#c9bd99" stroke-width="1" opacity=".7"/>
+      <path d="M114 64 C124 53 162 51 174 61" stroke="#fffaee" stroke-width="2.6" opacity=".95"/>
+      <path d="M122 74 C134 82 156 82 168 74" stroke="#d9cfb4" stroke-width="1.6" opacity=".7"/>
+      <path d="M130 66 C138 62 152 62 160 66" stroke="#fffaee" stroke-width="1.3" opacity=".6"/>
+    </g>
+  </g>
+  </g>
+</svg>
