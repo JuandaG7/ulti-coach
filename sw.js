@@ -1,49 +1,60 @@
-// Service worker: permite instalar la app y que abra sin internet.
-// - Archivos propios: primero red (para ver cambios), si no hay red usa caché.
-// - Librerías y modelo (CDN): primero caché, porque pesan y no cambian.
-const CACHE = "ulti-coach-v14";
+// Service worker: la app abre al instante y funciona sin internet.
+// - Cada versión guarda una copia COMPLETA de la app (todos los archivos juntos), así nunca se
+//   mezclan archivos viejos con nuevos. La app se sirve desde esa copia sin esperar a la red.
+// - Al publicar cambios hay que subir CACHE: el iPhone descarga la versión nueva por detrás
+//   y la usa en la siguiente apertura (la página se recarga sola una vez).
+// - Librerías y modelo de pose (CDN): caché aparte que sobrevive entre versiones, porque pesan.
+const CACHE = "ulti-coach-v15";
+const CDN_CACHE = "ulti-coach-cdn";
 const SHELL = [
   "./", "./index.html", "./style.css", "./app.js", "./store.js", "./scoring.js", "./ui.js",
-  "./pose.js", "./metrics.js", "./manifest.json", "./icons/mark.svg", "./icons/logo.svg",
-  "./data/tests.js", "./data/muscles.js", "./data/joints.js", "./data/exercises.js", "./data/safety.js", "./data/checkin.js", "./data/body-map.js", "./data/demo.js",
-  "./views/home.js", "./views/body.js", "./views/tests.js", "./views/video.js",
-  "./views/sheet.js", "./views/test-sheet.js", "./views/profile.js", "./views/blindaje.js", "./views/exercise-sheet.js", "./views/share.js", "./views/checkin.js", "./views/jump-video.js",
+  "./pose.js", "./metrics.js", "./manifest.json",
+  "./icons/mark.svg", "./icons/logo.svg", "./icons/apple-touch-icon.png", "./icons/icon-192.png", "./icons/icon-512.png",
+  "./data/tests.js", "./data/muscles.js", "./data/joints.js", "./data/exercises.js", "./data/safety.js",
+  "./data/checkin.js", "./data/body-map.js", "./data/demo.js",
+  "./views/home.js", "./views/body.js", "./views/tests.js", "./views/video.js", "./views/sheet.js",
+  "./views/test-sheet.js", "./views/profile.js", "./views/blindaje.js", "./views/exercise-sheet.js",
+  "./views/share.js", "./views/checkin.js", "./views/jump-video.js",
 ];
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
+  // "reload" salta la caché HTTP: la copia de esta versión se arma con archivos frescos del servidor.
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: "reload" })))));
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (e) => {
   e.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+    caches
+      .keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE && k !== CDN_CACHE).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener("fetch", (e) => {
-  if (e.request.method !== "GET" || !e.request.url.startsWith("http")) return;
-  const sameOrigin = new URL(e.request.url).origin === location.origin;
-  e.respondWith(sameOrigin ? networkFirst(e.request) : cacheFirst(e.request));
+  const req = e.request;
+  if (req.method !== "GET" || !req.url.startsWith("http")) return;
+  const url = new URL(req.url);
+  if (url.origin === location.origin) {
+    e.respondWith(fromShell(req));
+  } else {
+    e.respondWith(cdnFirst(req));
+  }
 });
 
-async function networkFirst(req) {
-  try {
-    // "no-cache" revalida con el servidor: evita mezclar archivos nuevos con viejos tras una actualización.
-    const res = await fetch(req, { cache: "no-cache" });
-    const cache = await caches.open(CACHE);
-    cache.put(req, res.clone());
-    return res;
-  } catch {
-    return (await caches.match(req)) ?? Response.error();
-  }
+async function fromShell(req) {
+  const cache = await caches.open(CACHE);
+  // Navegación (abrir la app): siempre la página de esta versión.
+  const hit = req.mode === "navigate" ? await cache.match("./") : await cache.match(req, { ignoreSearch: true });
+  return hit ?? fetch(req);
 }
 
-async function cacheFirst(req) {
-  const hit = await caches.match(req);
+async function cdnFirst(req) {
+  const cache = await caches.open(CDN_CACHE);
+  const hit = await cache.match(req);
   if (hit) return hit;
   const res = await fetch(req);
-  if (res.ok) (await caches.open(CACHE)).put(req, res.clone());
+  if (res.ok) cache.put(req, res.clone());
   return res;
 }

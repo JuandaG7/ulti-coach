@@ -39,7 +39,11 @@ try {
   // Sin almacenamiento: seguimos en memoria.
 }
 
+// Caché de listas ordenadas por prueba: se arma una vez y se borra al guardar algo.
+const sortedCache = new Map();
+
 function save() {
+  sortedCache.clear();
   try {
     localStorage.setItem(KEY, JSON.stringify(state));
   } catch {
@@ -114,6 +118,12 @@ export function saveCheckin(c) {
 // ---------- Mediciones ----------
 
 export function entries(testId) {
+  const key = testId ?? "*";
+  if (!sortedCache.has(key)) sortedCache.set(key, sortEntries(testId));
+  return [...sortedCache.get(key)];
+}
+
+function sortEntries(testId) {
   // Orden cronológico: por fecha y, dentro del mismo día, por el momento en que se registró.
   // (Las mediciones viejas sin createdAt conservan su orden de registro gracias al índice.)
   const list = state.entries
@@ -124,7 +134,8 @@ export function entries(testId) {
 }
 
 export function latest(testId) {
-  const list = entries(testId);
+  if (!sortedCache.has(testId)) sortedCache.set(testId, sortEntries(testId));
+  const list = sortedCache.get(testId);
   return list[list.length - 1] ?? null;
 }
 

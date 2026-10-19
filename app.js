@@ -15,7 +15,18 @@ let current = null;
 
 document.querySelectorAll("[data-icon]").forEach((el) => (el.outerHTML = icon(el.dataset.icon)));
 
-if ("serviceWorker" in navigator) {
+// Service worker solo en producción: en la Mac de desarrollo cada cambio se ve al instante.
+const isDev = ["localhost", "127.0.0.1"].includes(location.hostname);
+if ("serviceWorker" in navigator && !isDev) {
+  // Si ya había una versión y llega una nueva, recargamos una vez para usarla completa.
+  const hadController = !!navigator.serviceWorker.controller;
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (hadController && !reloaded) {
+      reloaded = true;
+      location.reload();
+    }
+  });
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }
 
