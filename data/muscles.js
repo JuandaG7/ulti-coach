@@ -16,7 +16,7 @@ export const MUSCLES = {
   },
   hamstrings: {
     name: "Isquiotibiales", importance: 1,
-    tests: { nordic: 0.6, sprint10: 0.2, sprint40: 0.2 },
+    tests: { nordic: 0.6, sprint10m: 0.2, sprint40m: 0.2 },
     why: "Producen la velocidad máxima y son la lesión más común en deportes de sprint. La fuerza excéntrica es tu seguro.",
     drills: {
       gym: ["Peso muerto rumano 3×8", "Nordic curl 3×5", "Curl femoral en máquina 3×10"],

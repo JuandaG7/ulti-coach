@@ -5,17 +5,37 @@
 const KEY = "ulti-coach:v1";
 const listeners = new Set();
 
+const VERSION = 2;
+
+// Migraciones: cada actualización de la app debe respetar los datos que ya tiene cada jugador.
+function migrate(data) {
+  let v = data.version ?? 1;
+  if (v < 2) {
+    // v2: el Yo-Yo pasa de metros a km. (Los sprints en yardas quedan guardados con su id viejo
+    // y ya no se muestran: no son comparables con las pruebas nuevas en metros.)
+    data.entries = data.entries.map((e) => (e.testId === "yoyo" && e.value > 50 ? { ...e, value: e.value / 1000 } : e));
+    v = 2;
+  }
+  data.version = v;
+  return data;
+}
+
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
-    const data = raw ? JSON.parse(raw) : {};
-    return { entries: data.entries ?? [], profile: data.profile ?? null };
+    const data = raw ? JSON.parse(raw) : { version: VERSION };
+    return migrate({ version: data.version, entries: data.entries ?? [], profile: data.profile ?? null });
   } catch {
-    return { entries: [], profile: null };
+    return { version: VERSION, entries: [], profile: null };
   }
 }
 
 let state = load();
+try {
+  localStorage.setItem(KEY, JSON.stringify(state));
+} catch {
+  // Sin almacenamiento: seguimos en memoria.
+}
 
 function save() {
   try {
@@ -127,6 +147,6 @@ export function exportJSON() {
 export function importJSON(text) {
   const data = JSON.parse(text);
   if (!Array.isArray(data.entries)) throw new Error("Archivo inválido");
-  state = { entries: data.entries, profile: data.profile ?? state.profile };
+  state = migrate({ version: data.version, entries: data.entries, profile: data.profile ?? state.profile });
   save();
 }

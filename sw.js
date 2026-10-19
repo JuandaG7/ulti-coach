@@ -1,7 +1,7 @@
 // Service worker: permite instalar la app y que abra sin internet.
 // - Archivos propios: primero red (para ver cambios), si no hay red usa caché.
 // - Librerías y modelo (CDN): primero caché, porque pesan y no cambian.
-const CACHE = "ulti-coach-v6";
+const CACHE = "ulti-coach-v7";
 const SHELL = [
   "./", "./index.html", "./style.css", "./app.js", "./store.js", "./scoring.js", "./ui.js",
   "./pose.js", "./metrics.js", "./manifest.json",

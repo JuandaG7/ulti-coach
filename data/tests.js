@@ -24,26 +24,26 @@ const INCLINE = " Mide el ángulo con la app Medidas del iPhone (pestaña Nivel)
 export const TESTS = [
   // ---------- Velocidad ----------
   {
-    id: "sprint10", cat: "velocidad", name: "Sprint 10 yd", unit: "s", decimals: 2, base: 2.0, elite: 1.6,
-    how: "Desde parado en posición de 3 apoyos, 10 yardas (9.14 m). Mejor de 3 intentos con 2 min de descanso.",
+    id: "sprint10m", cat: "velocidad", name: "Sprint 10 m", unit: "s", decimals: 2, base: 2.15, elite: 1.7,
+    how: "Desde parado en posición de 3 apoyos, 10 m. Mejor de 3 intentos con 2 min de descanso. Mide el primer paso: ganarle a tu marca en el corte.",
   },
   {
-    id: "sprint40", cat: "velocidad", name: "Sprint 40 yd", unit: "s", decimals: 2, base: 5.6, elite: 4.6,
-    how: "Desde parado, 40 yardas (36.6 m). Mejor de 2 intentos con descanso completo.",
+    id: "sprint40m", cat: "velocidad", name: "Sprint 40 m", unit: "s", decimals: 2, base: 6.1, elite: 5.0,
+    how: "Desde parado, 40 m. Mejor de 2 intentos con descanso completo. Mide la velocidad máxima: el corte profundo y la defensa del huck.",
   },
   // ---------- Cambio de dirección ----------
   {
-    id: "proAgility", cat: "agilidad", name: "5-10-5 (Pro agility)", unit: "s", decimals: 2, base: 5.3, elite: 4.3,
-    how: "Tres conos a 5 yd. Sales del centro, 5 yd a un lado, 10 yd al otro, 5 yd de vuelta al centro. Toca la línea con la mano. Mejor de cada lado.",
+    id: "proAgilityM", cat: "agilidad", name: "5-10-5 m", unit: "s", decimals: 2, base: 5.7, elite: 4.7,
+    how: "Tres conos en línea separados 5 m. Sales del centro, 5 m a un lado, 10 m al otro, 5 m de vuelta al centro. Toca la línea con la mano. Mejor de cada lado.",
   },
   {
     id: "test505", cat: "agilidad", name: "Test 505", unit: "s", decimals: 2, base: 2.8, elite: 2.2,
     how: "Corres 15 m de impulso; se cronometra desde la marca de 10 m, frenas y giras 180° en la marca de 15 m y vuelves a la de 10 m. Mide tu frenado y re-aceleración.",
   },
   {
-    id: "reactiveAgility", cat: "agilidad", name: "Agilidad reactiva", unit: "s", decimals: 2, base: 2.9, elite: 2.2,
+    id: "reactiveAgility", cat: "agilidad", name: "Agilidad reactiva", unit: "s", decimals: 2, base: 3.1, elite: 2.35,
     kind: "multi", reps: 6, timer: "reactive",
-    how: "Un cono a 5 yd a cada lado. Un compañero sostiene el celular: la app muestra una flecha al azar, corres a ese cono, lo tocas y vuelves a la línea; tu compañero toca Parar. 6 repeticiones, cuenta el promedio. Como en la cancha: reaccionas, no sabes a dónde vas.",
+    how: "Un cono a 5 m a cada lado. Un compañero sostiene el celular: la app muestra una flecha al azar, corres a ese cono, lo tocas y vuelves a la línea; tu compañero toca Parar. 6 repeticiones, cuenta el promedio. Como en la cancha: reaccionas, no sabes a dónde vas.",
   },
   // ---------- Potencia ----------
   {
@@ -56,8 +56,8 @@ export const TESTS = [
   },
   // ---------- Resistencia ----------
   {
-    id: "yoyo", cat: "resistencia", name: "Yo-Yo IR1", unit: "m", decimals: 0, base: 800, elite: 2400,
-    how: "Ida y vuelta de 20 m con pitidos que aceleran y 10 s de recuperación activa. Anota la distancia total al fallar dos veces.",
+    id: "yoyo", cat: "resistencia", name: "Yo-Yo IR1", unit: "km", decimals: 2, base: 0.8, elite: 2.4,
+    how: "Ida y vuelta de 20 m con pitidos que aceleran y 10 s de recuperación activa. Anota la distancia total en km al fallar dos veces (por ejemplo, 1600 m = 1.60 km).",
   },
   {
     id: "rsa", cat: "resistencia", name: "Sprints repetidos (6×30 m)", unit: "s", decimals: 2, base: 5.3, elite: 4.3,
@@ -108,7 +108,7 @@ export const TESTS = [
   },
   {
     id: "tibialisRaise", cat: "fuerza", name: "Elevación de tibial", unit: "reps", decimals: 0, base: 15, elite: 40,
-    how: "Espalda contra la pared, talones a un pie de distancia. Sube las puntas de los pies lo más alto posible y baja controlado. Hasta el fallo. Fortalece el frente de la pierna y protege tobillo y rodilla.",
+    how: "Espalda contra la pared, talones a unos 30 cm. Sube las puntas de los pies lo más alto posible y baja controlado. Hasta el fallo. Fortalece el frente de la pierna y protege tobillo y rodilla.",
   },
   {
     id: "plank", cat: "fuerza", name: "Plancha frontal", unit: "s", decimals: 0, base: 60, elite: 180,
@@ -173,14 +173,14 @@ export const TESTS = [
 // Metas para mujeres [base, élite]. Las pruebas que no aparecen usan las mismas metas.
 // Igual que las de arriba: referencias aproximadas, ajustables.
 const FEMALE_TARGETS = {
-  sprint10: [2.2, 1.8],
-  sprint40: [6.3, 5.3],
-  proAgility: [5.8, 4.8],
+  sprint10m: [2.4, 1.95],
+  sprint40m: [6.9, 5.7],
+  proAgilityM: [6.3, 5.2],
   test505: [3.0, 2.45],
-  reactiveAgility: [3.2, 2.45],
+  reactiveAgility: [3.4, 2.6],
   vertJump: [30, 52],
   broadJump: [160, 235],
-  yoyo: [500, 1600],
+  yoyo: [0.5, 1.6],
   rsa: [5.9, 4.8],
   fhDistance: [22, 50],
   bhDistance: [25, 58],

@@ -48,7 +48,7 @@ export const JOINTS = {
   hamstring: {
     name: "Isquiotibiales", importance: 1,
     rango: { aslr: 1 },
-    fuerza: { nordic: 0.7, sprint40: 0.3 },
+    fuerza: { nordic: 0.7, sprint40m: 0.3 },
     simetria: ["aslr"],
     why: "El desgarro de isquios es la lesión clásica del sprint. El Nordic curl tiene de las mejores evidencias en prevención de lesiones deportivas: pocas series a la semana bastan.",
     drills: {
