@@ -23,7 +23,12 @@
   --t2: #42966a; /* Decente */
   --t3: #8cc7a0; /* Bueno */
   --t4: #e3ecd0; /* Excelente */
-  --t4-glow: rgba(227, 236, 208, 0.42);
+  /* Dorado: solo como recompensa del nivel Excelente */
+  --gold: #e2c27e;
+  --gold-deep: #a8781f;
+  --gold-glow: rgba(226, 194, 126, 0.55);
+  --t4-glow: var(--gold-glow);
+  --ivory-glow: rgba(227, 236, 208, 0.42);
 
   /* Estado (solo para mejoró / empeoró y alertas, siempre con ícono) */
   --good: #7ee2a8;
@@ -146,7 +151,8 @@ section { display: flex; flex-direction: column; gap: 16px; }
   background: var(--tier); color: var(--tier-ink);
 }
 .chip .icon { width: 12px; height: 12px; fill: currentColor; }
-.chip.tier-t4 { box-shadow: 0 0 14px var(--t4-glow); }
+.chip.tier-t4 { box-shadow: 0 0 0 1px var(--gold), 0 0 14px var(--gold-glow); }
+.chip.tier-t4 .icon { color: var(--gold-deep); }
 .row-score { display: inline-flex; align-items: center; gap: 8px; }
 
 /* ---------- Anillo de puntaje ---------- */
@@ -154,7 +160,7 @@ section { display: flex; flex-direction: column; gap: 16px; }
 .ring svg { width: 100%; height: 100%; display: block; overflow: visible; }
 .ring-track { stroke: var(--surface-3); }
 .ring-value { stroke: var(--tier); transition: stroke-dashoffset 0.9s var(--ease); }
-.ring.tier-t4 .ring-value { filter: drop-shadow(0 0 8px var(--t4-glow)); }
+.ring.tier-t4 .ring-value { stroke: var(--gold); filter: drop-shadow(0 0 10px var(--gold-glow)); }
 .ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .ring-score { font-weight: 700; line-height: 1; }
 .ring-label { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
@@ -173,7 +179,8 @@ section { display: flex; flex-direction: column; gap: 16px; }
     radial-gradient(110% 130% at 0% 0%, rgba(66, 150, 106, 0.22), transparent 60%),
     var(--surface);
 }
-.hero.tier-t4 { background: radial-gradient(110% 130% at 0% 0%, rgba(227, 236, 208, 0.24), transparent 60%), var(--surface); border-color: rgba(227, 236, 208, 0.4); }
+.hero.tier-t4 { background: radial-gradient(110% 130% at 0% 0%, rgba(226, 194, 126, 0.22), transparent 60%), var(--card-bg); border-color: rgba(226, 194, 126, 0.5); box-shadow: var(--card-shadow), 0 0 40px rgba(226, 194, 126, 0.12); }
+.hero.tier-t4 .display { color: var(--gold); text-shadow: 0 0 24px rgba(226, 194, 126, 0.35); }
 .hero-text { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .hero .display { font-size: 3rem; }
 .hero .btn-row { margin-top: 12px; }
@@ -202,7 +209,7 @@ section { display: flex; flex-direction: column; gap: 16px; }
 
 .delta { display: inline-flex; align-items: center; gap: 1px; font-family: var(--font-display); font-size: 1rem; font-weight: 600; min-width: 52px; justify-content: flex-end; }
 .delta .icon { width: 16px; height: 16px; }
-.delta.good { color: var(--good); }
+.delta.good { color: var(--text); }
 .delta.bad { color: var(--bad); }
 
 .focus-grid { display: grid; gap: 18px; }
@@ -341,7 +348,7 @@ input:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color:
 .chart-area { fill: rgba(140, 199, 160, 0.14); }
 .chart-line { stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
 .chart-dot { fill: var(--surface); stroke: var(--accent); stroke-width: 2; }
-.chart-dot.last { fill: var(--t4); stroke: var(--surface); stroke-width: 3; filter: drop-shadow(0 0 6px var(--t4-glow)); }
+.chart-dot.last { fill: var(--t4); stroke: var(--surface); stroke-width: 3; filter: drop-shadow(0 0 6px var(--ivory-glow)); }
 .chart-value { fill: var(--text); font: 700 15px var(--font-display); }
 
 .timer { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 18px; padding: 20px; border-radius: var(--radius-sm); background: var(--bg); border: 1px solid var(--border); text-align: center; }
@@ -386,7 +393,7 @@ input:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color:
 .asym.red { color: var(--bad); background: rgba(248, 113, 113, 0.12); }
 
 .timer-status { min-height: 1.2em; }
-.timer-arrow { font-size: 6rem; line-height: 1; color: var(--t4); text-shadow: 0 0 24px var(--t4-glow); font-weight: 700; }
+.timer-arrow { font-size: 6rem; line-height: 1; color: var(--t4); text-shadow: 0 0 24px var(--ivory-glow); font-weight: 700; }
 
 /* ---------- Blindaje ---------- */
 .banner.warn { display: flex; gap: 10px; align-items: flex-start; background: rgba(251, 191, 36, 0.1); border-color: rgba(251, 191, 36, 0.4); }
@@ -599,3 +606,8 @@ progress { width: 100%; margin-top: 8px; accent-color: var(--accent); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* Resultado Excelente en la hoja de prueba: acento dorado */
+.result-hero.tier-t4 { box-shadow: inset 4px 0 0 var(--gold), 0 10px 24px rgba(0, 0, 0, 0.45), 0 0 28px rgba(226, 194, 126, 0.14); }
+.result-hero.tier-t4 .result-score-num { color: var(--gold); }
+.tag.best { background: rgba(226, 194, 126, 0.16); color: var(--gold); }
