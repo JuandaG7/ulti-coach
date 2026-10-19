@@ -28,8 +28,13 @@ export function onChange(fn) {
 }
 
 export function entries(testId) {
-  const list = testId ? state.entries.filter((e) => e.testId === testId) : state.entries;
-  return [...list].sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+  // Orden cronológico: por fecha y, dentro del mismo día, por el momento en que se registró.
+  // (Las mediciones viejas sin createdAt conservan su orden de registro gracias al índice.)
+  const list = state.entries
+    .map((e, i) => ({ e, i }))
+    .filter(({ e }) => !testId || e.testId === testId);
+  list.sort((a, b) => a.e.date.localeCompare(b.e.date) || (a.e.createdAt ?? 0) - (b.e.createdAt ?? 0) || a.i - b.i);
+  return list.map(({ e }) => e);
 }
 
 export function latest(testId) {
@@ -38,7 +43,7 @@ export function latest(testId) {
 }
 
 export function addEntry(testId, value, date) {
-  state.entries.push({ id: crypto.randomUUID(), testId, value, date });
+  state.entries.push({ id: crypto.randomUUID(), testId, value, date, createdAt: Date.now() });
   save();
 }
 
