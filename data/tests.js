@@ -204,6 +204,45 @@ for (const t of TESTS) {
   if (!t.timer && t.unit === "s" && ["fuerza", "estabilidad"].includes(t.cat)) t.timer = "hold";
 }
 
+// Búsqueda de video en YouTube para ver cómo se hace cada prueba.
+const VIDEO_QUERIES = {
+  sprint10m: "sprint 10 metros salida test técnica",
+  sprint40m: "sprint 40 metros test velocidad",
+  proAgilityM: "5-10-5 pro agility drill technique",
+  test505: "505 agility test",
+  reactiveAgility: "reactive agility drill partner pointing",
+  vertJump: "salto vertical contramovimiento test pared",
+  broadJump: "standing broad jump test technique",
+  yoyo: "Yo-Yo intermittent recovery test level 1",
+  rsa: "repeated sprint ability test 6x30m",
+  hrRecovery: "heart rate recovery 1 minute test",
+  fhDistance: "ultimate frisbee forehand huck technique",
+  bhDistance: "ultimate frisbee backhand huck technique",
+  fhSpeed: "ultimate frisbee forehand flick technique",
+  throwAccuracy: "ultimate frisbee throwing accuracy drill",
+  nordic: "nordic hamstring curl técnica",
+  copenhagen: "copenhagen plank adductor",
+  pistol: "single leg box squat técnica",
+  gluteBridge: "single leg glute bridge técnica",
+  calfRaise: "single leg calf raise test",
+  tibialisRaise: "tibialis raise wall",
+  plank: "plancha abdominal técnica correcta",
+  sidePlank: "plancha lateral técnica correcta",
+  sorensen: "Biering Sorensen test",
+  pullups: "dominadas técnica correcta",
+  pushups: "flexiones técnica correcta",
+  deadHang: "dead hang barra técnica",
+  balanceEC: "single leg balance eyes closed test",
+  singleHop: "single leg hop test distance",
+  kneeToWall: "knee to wall test dorsiflexion",
+  aslr: "active straight leg raise test",
+  hipIR: "seated hip internal rotation test",
+  thoracicRot: "quadruped thoracic rotation test lumbar locked",
+  shoulderER: "shoulder external rotation range of motion supine test",
+  shoulderIR: "shoulder internal rotation range of motion supine GIRD",
+};
+for (const t of TESTS) t.video = VIDEO_QUERIES[t.id] ?? `${t.name} prueba técnica`;
+
 export const TESTS_BY_ID = Object.fromEntries(TESTS.map((t) => [t.id, t]));
 
 // Valor que cuenta para el puntaje a partir de lo registrado.

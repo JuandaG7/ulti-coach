@@ -440,6 +440,7 @@ input:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color:
 .step-error .step-label { color: var(--warn); }
 .step-label .icon { width: 14px; height: 14px; }
 .sheet-foot { margin-top: 14px; }
+.video-btn { margin-top: 12px; }
 
 .banner.danger { display: flex; gap: 10px; align-items: flex-start; background: rgba(248, 113, 113, 0.12); border-color: rgba(248, 113, 113, 0.45); color: #fecaca; margin-top: 14px; }
 .banner.danger .icon { color: var(--bad); margin-top: 2px; }

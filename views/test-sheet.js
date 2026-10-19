@@ -75,6 +75,7 @@ function render(root, testId) {
       <summary>Cómo hacer la prueba</summary>
       <p>${test.how}</p>
     </details>
+    <a class="btn secondary block video-btn" href="https://www.youtube.com/results?search_query=${encodeURIComponent(test.video)}" target="_blank" rel="noopener">${icon("video")} Ver cómo se hace en YouTube</a>
 
     ${list.length ? `
       <h3 class="subhead">Historial ${best && list.length > 1 ? `<span class="muted small">· mejor: <span class="num">${fmt(best.value, test.decimals)} ${test.unit}</span></span>` : ""}</h3>

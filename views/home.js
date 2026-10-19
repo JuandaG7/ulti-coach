@@ -174,6 +174,15 @@ function renderEmpty(root) {
         </div>
       </div>
     </section>
+    <a class="card shield-card" href="#blindaje">
+      <span class="shield-icon">${icon("shield")}</span>
+      <div class="row-main">
+        <span class="eyebrow">Mientras tanto</span>
+        <span class="shield-title">Ejercicios de blindaje con video</span>
+        <span class="muted small">Tobillo, rodilla, cadera, isquios, hombro y espalda: toca cualquier ejercicio para ver cómo se hace.</span>
+      </div>
+      ${icon("chevron", "muted")}
+    </a>
     ${dataSection()}
   `;
   bind(root);
