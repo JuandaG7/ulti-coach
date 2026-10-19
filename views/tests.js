@@ -4,6 +4,7 @@ import { entries } from "../store.js";
 import { categoryScore, testScore } from "../scoring.js";
 import { sparkline, fmt, fmtDate, icon, tierClass, levelChip } from "../ui.js";
 import { openTestSheet } from "./test-sheet.js";
+import { WARMUP, SAFETY } from "../data/safety.js";
 
 export function render(root, filter) {
   const cats = filter && CATEGORIES.some((c) => c.id === filter) ? CATEGORIES.filter((c) => c.id === filter) : CATEGORIES;
@@ -13,6 +14,14 @@ export function render(root, filter) {
       <h1 class="display">Pruebas</h1>
       <p class="muted small">Mídete cada 3–4 semanas en condiciones parecidas (calentamiento, superficie, hora).</p>
     </header>
+
+    <details class="card warmup-card">
+      <summary>${icon("zap")} Antes de medirte: calentamiento y seguridad</summary>
+      <h3 class="subhead">Calentamiento · 10 min</h3>
+      <ol class="warmup-steps">${WARMUP.map((w) => `<li><strong>${w.title}</strong><span>${w.text}</span></li>`).join("")}</ol>
+      <h3 class="subhead">Seguridad</h3>
+      <ul class="safety-list">${SAFETY.map((r) => `<li>${icon("shield")}<span>${r}</span></li>`).join("")}</ul>
+    </details>
 
     <nav class="filter-chips" aria-label="Filtrar por categoría">
       <a href="#pruebas" class="${!filter ? "active" : ""}">Todas</a>

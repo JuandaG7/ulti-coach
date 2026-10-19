@@ -1,6 +1,6 @@
 // Perfil del atleta. La primera vez que se abre la app funciona como bienvenida.
 import * as store from "../store.js";
-import { POSITIONS, jumpPower } from "../scoring.js";
+import { POSITIONS, jumpPower, ageFactor } from "../scoring.js";
 import { icon, today, fmtDate, sparkline, toast } from "../ui.js";
 
 const POSITION_HELP = {
@@ -19,8 +19,9 @@ export function render(root, param) {
       ${welcome ? `<p class="eyebrow">Bienvenido a Ulti Coach</p>` : ""}
       <h1 class="display">${welcome ? "Arma tu perfil" : "Tu perfil"}</h1>
       <p class="muted">${welcome
-        ? "Con esto ajustamos tus metas (según sexo), tus prioridades (según posición) y los ejercicios (gym o casa). Lo puedes cambiar cuando quieras."
+        ? "Con esto ajustamos tus metas (según edad y sexo), tus prioridades (según posición) y los ejercicios (gym o casa). Lo puedes cambiar cuando quieras."
         : "Tus metas y prioridades se recalculan cuando cambias algo aquí."}</p>
+      ${!welcome && ageFactor() !== 1 ? `<p class="hint-chip">${icon("target")} Metas ajustadas a tus ${p.age} años (estimación)</p>` : ""}
     </header>
 
     <form class="card form profile-form" novalidate>
@@ -31,7 +32,7 @@ export function render(root, param) {
       </label>
 
       <fieldset class="field">
-        <legend>Sexo <span class="muted small">(define las metas)</span></legend>
+        <legend>Sexo <span class="muted small">(ajusta las metas)</span></legend>
         <div class="segmented wide">
           ${radio("sex", "m", "Hombre", p.sex)}
           ${radio("sex", "f", "Mujer", p.sex)}

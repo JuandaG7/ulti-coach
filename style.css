@@ -424,6 +424,41 @@ input:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color:
 .shield-icon .icon { width: 24px; height: 24px; }
 .shield-title { font-size: 1.05rem; }
 
+/* ---------- Ejercicios, seguridad y compartir ---------- */
+.chips.drills .drill { display: inline-flex; align-items: center; gap: 2px; font-size: 0.82rem; padding: 6px 6px 6px 11px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-2); min-height: 32px; text-align: left; transition: background-color .15s, border-color .15s; }
+.chips.drills li { padding: 0; border: 0; background: none; }
+.chips.drills .drill:active { background: var(--surface-3); }
+.chips.drills .drill:hover { border-color: var(--accent); }
+.chips.drills .icon { width: 14px; height: 14px; color: var(--muted); }
+.focus-head { color: inherit; }
+.dose { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 14px; padding: 6px 12px; border-radius: 99px; background: rgba(74, 157, 255, 0.14); color: var(--t4); font-weight: 600; }
+.dose .icon { width: 16px; height: 16px; }
+.steps { list-style: none; margin: 0 0 18px; padding: 0; display: grid; gap: 10px; }
+.steps li { padding: 12px 14px; border-radius: var(--radius-sm); background: var(--surface-2); color: var(--text-2); }
+.step-label { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.step-error { border-left: 3px solid var(--warn); }
+.step-error .step-label { color: var(--warn); }
+.step-label .icon { width: 14px; height: 14px; }
+.sheet-foot { margin-top: 14px; }
+
+.banner.danger { display: flex; gap: 10px; align-items: flex-start; background: rgba(248, 113, 113, 0.12); border-color: rgba(248, 113, 113, 0.45); color: #fecaca; margin-top: 14px; }
+.banner.danger .icon { color: var(--bad); margin-top: 2px; }
+.warmup { margin-top: 14px; padding: 12px 14px; border-radius: var(--radius-sm); background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.3); }
+.warmup summary { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; font-weight: 600; font-size: 0.9rem; color: #fde4a3; }
+.warmup summary .icon { width: 16px; height: 16px; color: var(--warn); margin-top: 2px; flex: none; }
+.warmup ol { margin: 10px 0 0; padding-left: 20px; display: grid; gap: 6px; font-size: 0.88rem; color: var(--text-2); }
+.warmup-card summary { display: flex; gap: 10px; align-items: center; cursor: pointer; font-weight: 600; min-height: 28px; }
+.warmup-card summary .icon { color: var(--warn); }
+.warmup-steps { margin: 0; padding-left: 20px; display: grid; gap: 8px; color: var(--text-2); font-size: 0.92rem; }
+.warmup-steps li span { display: block; }
+.safety-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; color: var(--text-2); font-size: 0.92rem; }
+.safety-list li { display: flex; gap: 8px; align-items: flex-start; }
+.safety-list .icon { width: 16px; height: 16px; color: var(--accent); margin-top: 3px; }
+
+.share-btn { margin-top: 12px; align-self: flex-start; }
+.share-preview { white-space: pre-wrap; word-break: break-word; max-height: 46vh; overflow: auto; margin: 14px 0; padding: 14px; border-radius: var(--radius-sm); background: var(--bg); border: 1px solid var(--border); font: 0.85rem/1.5 var(--font-body); color: var(--text-2); }
+.share-actions .btn { flex: 1; }
+
 /* ---------- Aviso flotante ---------- */
 .toast {
   position: fixed; left: 50%; bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 14px); z-index: 100;
@@ -469,7 +504,7 @@ progress { width: 100%; margin-top: 8px; accent-color: var(--accent); }
 @media (max-width: 420px) {
   .hero { flex-direction: column; text-align: center; align-items: center; }
   .hero-text { align-items: center; }
-  .hint-chip { align-self: center; }
+  .hint-chip, .share-btn { align-self: center; }
   .hero .btn-row { justify-content: center; }
   .field-row { gap: 8px; }
   .field-row input { padding: 0 10px; }

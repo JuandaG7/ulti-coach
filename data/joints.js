@@ -81,3 +81,8 @@ export const JOINTS = {
 };
 
 export const SIDES = { L: "Izquierda", R: "Derecha", both: "Ambos lados" };
+
+// "tobillo (lado derecho)": evita problemas de género ("tobillo derecha", "rodilla derecho").
+export function sidePhrase(side) {
+  return side === "L" ? " (lado izquierdo)" : side === "R" ? " (lado derecho)" : "";
+}

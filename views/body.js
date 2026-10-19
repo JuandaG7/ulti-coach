@@ -6,6 +6,7 @@ import { latest, profile } from "../store.js";
 import { muscleScore, testScore, level, nextLevel, priorities, target, muscleImportance, LEVELS } from "../scoring.js";
 import { ring, bar, icon, fmt, tierClass, levelChip } from "../ui.js";
 import { openTestSheet } from "./test-sheet.js";
+import { drillChips, bindDrills } from "./exercise-sheet.js";
 
 const SIDES = { front: FRONT, back: BACK };
 const sideOf = (muscleId) =>
@@ -75,6 +76,7 @@ export function render(root, selected) {
   }
   scrollToDetail = false;
   root.querySelectorAll("[data-test]").forEach((b) => b.addEventListener("click", () => openTestSheet(b.dataset.test)));
+  bindDrills(root);
 }
 
 function bodySvg(selected) {
@@ -129,6 +131,6 @@ function detail(id) {
     </ul>
 
     <h3 class="subhead">Para subirlo · ${mode === "gym" ? "gimnasio" : "casa"}</h3>
-    <ul class="chips">${m.drills[mode].map((d) => `<li>${d}</li>`).join("")}</ul>
+    ${drillChips(m.drills[mode])}
   `;
 }

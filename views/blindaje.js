@@ -1,11 +1,12 @@
 // Blindaje: salud de articulaciones y zonas que más se lesionan en ultimate.
 // Muestra rango, fuerza/control y simetría por zona, alertas izquierda/derecha y el historial de lesiones.
-import { JOINTS, DIMENSIONS, SIDES } from "../data/joints.js";
+import { JOINTS, DIMENSIONS, SIDES, sidePhrase } from "../data/joints.js";
 import { TESTS_BY_ID } from "../data/tests.js";
 import * as store from "../store.js";
 import { jointPriorities, jointDimensions, asymmetryFlag } from "../scoring.js";
 import { ring, bar, icon, levelChip, fmt, fmtDate, today } from "../ui.js";
 import { openTestSheet } from "./test-sheet.js";
+import { drillChips, bindDrills } from "./exercise-sheet.js";
 import { openSheet, closeSheet } from "./sheet.js";
 
 export function render(root) {
@@ -19,7 +20,7 @@ export function render(root) {
     </header>
 
     ${active.map((i) => `
-      <div class="banner warn">${icon("alert")}<span>Lesión activa: <strong>${JOINTS[i.zone].name}${i.side !== "both" ? ` ${SIDES[i.side].toLowerCase()}` : ""}</strong>. No hagas pruebas ni ejercicios que te duelan en esa zona y sigue las indicaciones de tu fisio.</span></div>`).join("")}
+      <div class="banner warn">${icon("alert")}<span>Lesión activa: <strong>${JOINTS[i.zone].name}${sidePhrase(i.side)}</strong>. No hagas pruebas ni ejercicios que te duelan en esa zona y sigue las indicaciones de tu fisio.</span></div>`).join("")}
 
     <div class="joint-list">
       ${jointPriorities().map((p, i) => jointCard(p, i, mode)).join("")}
@@ -41,6 +42,7 @@ export function render(root) {
   `;
 
   root.querySelectorAll("[data-test]").forEach((b) => b.addEventListener("click", () => openTestSheet(b.dataset.test)));
+  bindDrills(root);
   root.querySelector('[data-act="add-injury"]').addEventListener("click", () => openInjurySheet());
   root.querySelectorAll("[data-injury]").forEach((b) =>
     b.addEventListener("click", () => openInjurySheet(store.injuries().find((i) => i.id === b.dataset.injury)))
@@ -93,7 +95,7 @@ function jointCard({ id, joint, score, injury, alerts }, i, mode) {
         <summary>Por qué importa y qué hacer</summary>
         <p class="why">${joint.why}</p>
         <h3 class="subhead">Blindaje · ${mode === "gym" ? "gimnasio" : "casa"}</h3>
-        <ul class="chips">${joint.drills[mode].map((d) => `<li>${d}</li>`).join("")}</ul>
+        ${drillChips(joint.drills[mode])}
         ${missing.length ? `
           <h3 class="subhead">Falta medir</h3>
           <div class="btn-row">${missing.map((t) => `<button class="add-pill" data-test="${t}">${icon("plus")} ${TESTS_BY_ID[t].name}</button>`).join("")}</div>` : ""}
@@ -106,7 +108,7 @@ function injuryRow(i) {
     <button class="row" data-injury="${i.id}">
       <span class="injury-dot ${i.status}" aria-hidden="true"></span>
       <div class="row-main">
-        <span>${JOINTS[i.zone].name}${i.side !== "both" ? ` · ${SIDES[i.side].toLowerCase()}` : ""}</span>
+        <span>${JOINTS[i.zone].name}${sidePhrase(i.side)}</span>
         <span class="muted small">${fmtDate(i.date, { day: "numeric", month: "short", year: "numeric" })} · ${i.status === "activa" ? "activa" : "recuperada"}${i.note ? ` · ${escapeHtml(i.note)}` : ""}</span>
       </div>
       ${icon("edit", "muted")}

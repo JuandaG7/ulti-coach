@@ -6,6 +6,8 @@ import { overallScore, categoryScore, level, nextLevel, priorities, testsMeasure
 import { SIDES } from "../data/joints.js";
 import { ring, bar, icon, fmt, fmtDate, tierClass, levelChip } from "../ui.js";
 import { openTestSheet } from "./test-sheet.js";
+import { drillChips, bindDrills } from "./exercise-sheet.js";
+import { openShareSheet } from "./share.js";
 
 export function render(root) {
   const all = store.entries();
@@ -27,6 +29,7 @@ export function render(root) {
         <h1 class="display">${level(overall).name}</h1>
         <p class="muted small">${measured} de ${TESTS.length} pruebas medidas · última ${fmtDate(lastDate)}</p>
         ${nextLevelHint(overall)}
+        <button class="btn secondary share-btn" data-act="share">${icon("upload")} Compartir con mi entrenador</button>
       </div>
     </section>
 
@@ -100,18 +103,18 @@ function nextLevelHint(score) {
 function focusCard({ id, muscle, score }, i, mode) {
   const untested = Object.keys(muscle.tests).find((t) => !store.latest(t));
   return `
-    <a class="card focus" href="#cuerpo/${id}">
-      <div class="focus-head">
+    <article class="card focus">
+      <a class="focus-head" href="#cuerpo/${id}">
         <span class="focus-rank num">${i + 1}</span>
         <span class="focus-name">${muscle.name}</span>
         <span class="row-score"><span class="num score">${score ?? "–"}</span>${score != null ? levelChip(score) : ""}</span>
-      </div>
+      </a>
       ${bar(score)}
       <p class="small">${muscle.why}</p>
       ${score == null && untested
-        ? `<p class="small accent">Mídelo primero: ${TESTS_BY_ID[untested].name}</p>`
-        : `<ul class="chips">${muscle.drills[mode].map((d) => `<li>${d}</li>`).join("")}</ul>`}
-    </a>`;
+        ? `<button class="add-pill" data-test="${untested}">${icon("plus")} Mídelo primero: ${TESTS_BY_ID[untested].name}</button>`
+        : drillChips(muscle.drills[mode])}
+    </article>`;
 }
 
 function recentRows() {
@@ -179,6 +182,7 @@ function renderEmpty(root) {
 function bind(root) {
   root.querySelectorAll('[data-act="demo"]').forEach((b) => b.addEventListener("click", () => store.loadDemo(buildDemo())));
   root.querySelectorAll('[data-act="clear-demo"]').forEach((b) => b.addEventListener("click", () => store.clearDemo()));
+  root.querySelector('[data-act="share"]')?.addEventListener("click", openShareSheet);
   root.querySelector('[data-act="export"]')?.addEventListener("click", () => {
     const blob = new Blob([store.exportJSON()], { type: "application/json" });
     const a = document.createElement("a");
@@ -197,4 +201,5 @@ function bind(root) {
     }
   });
   root.querySelectorAll("[data-test]").forEach((b) => b.addEventListener("click", () => openTestSheet(b.dataset.test)));
+  bindDrills(root);
 }

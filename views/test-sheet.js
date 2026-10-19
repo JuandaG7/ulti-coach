@@ -3,8 +3,10 @@
 import { TESTS_BY_ID, CATEGORIES, entryValue } from "../data/tests.js";
 import { MUSCLES } from "../data/muscles.js";
 import * as store from "../store.js";
-import { testScore, target, isImprovement, level, snapshot, asymmetry, asymmetryFlag } from "../scoring.js";
+import { testScore, target, isImprovement, level, snapshot, asymmetry, asymmetryFlag, isAgeAdjusted } from "../scoring.js";
 import { openSheet } from "./sheet.js";
+import { WARMUP, isMaxEffort, zonesForTest } from "../data/safety.js";
+import { JOINTS, SIDES, sidePhrase } from "../data/joints.js";
 import { icon, fmt, fmtDate, today, historyChart, levelChip, tierClass, toast } from "../ui.js";
 
 let editing = null; // id de la medición que se está editando
@@ -45,7 +47,7 @@ function render(root, testId) {
     ${last ? extraInsight(test, last) : ""}
 
     <div class="meta-row">
-      <span>${icon("target")} Meta Excelente: <strong class="num">${fmt(tgt.elite, test.decimals)} ${test.unit}</strong></span>
+      <span>${icon("target")} Meta Excelente${isAgeAdjusted(testId) ? ` a tus ${store.profile().age} años` : ""}: <strong class="num">${fmt(tgt.elite, test.decimals)} ${test.unit}</strong></span>
       <span class="muted">${lowerIsBetter ? "Menos es mejor" : "Más es mejor"}</span>
     </div>
 
@@ -54,6 +56,8 @@ function render(root, testId) {
       : list.length
         ? `<p class="muted small chart-hint">Con 3 mediciones aparece tu gráfica de progreso.</p>`
         : ""}
+
+    ${safetyBlock(test)}
 
     ${test.timer ? timerBlock(test) : ""}
 
@@ -108,6 +112,21 @@ function render(root, testId) {
       }
     })
   );
+}
+
+// ---------- Seguridad ----------
+
+function safetyBlock(test) {
+  const injured = store.injuries().filter((i) => i.status === "activa" && zonesForTest(test.id).includes(i.zone));
+  const minor = (store.profile()?.age ?? 99) < 18;
+  return `
+    ${injured.map((i) => `
+      <div class="banner danger">${icon("alert")}<span>Tienes una lesión activa en <strong>${JOINTS[i.zone].name.toLowerCase()}${sidePhrase(i.side)}</strong> y esta prueba carga esa zona. No la hagas hasta que tu fisio lo autorice.</span></div>`).join("")}
+    ${isMaxEffort(test) ? `
+      <details class="warmup">
+        <summary>${icon("zap")} Prueba de esfuerzo máximo: calienta 10 min antes${minor ? " y hazla con tu entrenador presente" : ""}</summary>
+        <ol>${WARMUP.map((w) => `<li><strong>${w.title}</strong> ${w.text}</li>`).join("")}</ol>
+      </details>` : ""}`;
 }
 
 // ---------- Campos según el tipo de prueba ----------

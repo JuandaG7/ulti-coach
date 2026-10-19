@@ -1,13 +1,13 @@
 // Service worker: permite instalar la app y que abra sin internet.
 // - Archivos propios: primero red (para ver cambios), si no hay red usa caché.
 // - Librerías y modelo (CDN): primero caché, porque pesan y no cambian.
-const CACHE = "ulti-coach-v7";
+const CACHE = "ulti-coach-v9";
 const SHELL = [
   "./", "./index.html", "./style.css", "./app.js", "./store.js", "./scoring.js", "./ui.js",
   "./pose.js", "./metrics.js", "./manifest.json",
-  "./data/tests.js", "./data/muscles.js", "./data/joints.js", "./data/body-map.js", "./data/demo.js",
+  "./data/tests.js", "./data/muscles.js", "./data/joints.js", "./data/exercises.js", "./data/safety.js", "./data/body-map.js", "./data/demo.js",
   "./views/home.js", "./views/body.js", "./views/tests.js", "./views/video.js",
-  "./views/sheet.js", "./views/test-sheet.js", "./views/profile.js", "./views/blindaje.js",
+  "./views/sheet.js", "./views/test-sheet.js", "./views/profile.js", "./views/blindaje.js", "./views/exercise-sheet.js", "./views/share.js",
 ];
 
 self.addEventListener("install", (e) => {
@@ -30,7 +30,8 @@ self.addEventListener("fetch", (e) => {
 
 async function networkFirst(req) {
   try {
-    const res = await fetch(req);
+    // "no-cache" revalida con el servidor: evita mezclar archivos nuevos con viejos tras una actualización.
+    const res = await fetch(req, { cache: "no-cache" });
     const cache = await caches.open(CACHE);
     cache.put(req, res.clone());
     return res;

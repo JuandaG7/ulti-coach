@@ -20,9 +20,39 @@ export const POSITIONS = {
   hibrido: "Híbrido",
 };
 
+// Ajuste por edad (estimación): antes de los 20 se está madurando (las mujeres maduran antes)
+// y desde los 35 se pierde algo de rendimiento. 1 = metas de adulto.
+const AGE_CURVE = {
+  m: { 13: 0.78, 14: 0.82, 15: 0.86, 16: 0.9, 17: 0.94, 18: 0.97, 19: 0.99 },
+  f: { 13: 0.85, 14: 0.89, 15: 0.93, 16: 0.96, 17: 0.98, 18: 1, 19: 1 },
+};
+
+export function ageFactor() {
+  const p = profile();
+  const age = p?.age;
+  if (!age) return 1;
+  if (age < 20) return AGE_CURVE[p.sex === "f" ? "f" : "m"][Math.max(13, age)] ?? 1;
+  if (age >= 35) return Math.max(0.8, 1 - (age - 34) * 0.007);
+  return 1;
+}
+
+// La movilidad, el equilibrio, la precisión y la recuperación cardíaca no se ajustan por edad.
+const NOT_AGE_ADJUSTED = new Set(["movilidad", "estabilidad"]);
+const NOT_AGE_ADJUSTED_TESTS = new Set(["throwAccuracy", "hrRecovery"]);
+
+export function isAgeAdjusted(testId) {
+  const t = TESTS_BY_ID[testId];
+  return ageFactor() !== 1 && !NOT_AGE_ADJUSTED.has(t.cat) && !NOT_AGE_ADJUSTED_TESTS.has(testId);
+}
+
 export function target(testId) {
   const t = TESTS_BY_ID[testId];
-  return t.targets[profile()?.sex === "f" ? "f" : "m"];
+  const tgt = t.targets[profile()?.sex === "f" ? "f" : "m"];
+  if (!isAgeAdjusted(testId)) return tgt;
+  const f = ageFactor();
+  // En pruebas de tiempo la diferencia por edad es menor: se aplica la mitad del ajuste.
+  const adj = (v) => (tgt.elite < tgt.base ? v / (1 - (1 - f) / 2) : v * f);
+  return { base: adj(tgt.base), elite: adj(tgt.elite) };
 }
 
 export function testScore(testId, value) {
