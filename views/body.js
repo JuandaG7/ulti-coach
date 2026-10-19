@@ -4,7 +4,7 @@ import { MUSCLES, SVG_TO_MUSCLE } from "../data/muscles.js";
 import { TESTS_BY_ID } from "../data/tests.js";
 import { latest, profile } from "../store.js";
 import { muscleScore, testScore, level, nextLevel, priorities, target, muscleImportance, LEVELS } from "../scoring.js";
-import { ring, bar, icon, fmt, tierClass, levelChip } from "../ui.js";
+import { ring, bar, icon, fmt, tierClass, levelChip, summary } from "../ui.js";
 import { openTestSheet } from "./test-sheet.js";
 import { drillChips, bindDrills } from "./exercise-sheet.js";
 
@@ -18,6 +18,15 @@ let scrollToDetail = false;
 export function render(root, selected) {
   if (selected && MUSCLES[selected]) side = sideOf(selected);
   else selected = null;
+  const ranking = priorities();
+  const rankRow = ({ id, muscle, score }) => `
+    <a class="row muscle-row ${id === selected ? "selected" : ""}" href="#cuerpo/${id}">
+      <div class="row-main">
+        <div class="row-head"><span>${muscle.name}</span><span class="row-score"><span class="num score">${score ?? "–"}</span>${score != null ? levelChip(score) : ""}</span></div>
+        ${bar(score)}
+      </div>
+      ${icon("chevron", "muted")}
+    </a>`;
 
   root.innerHTML = `
     <header class="page-head">
@@ -45,16 +54,11 @@ export function render(root, selected) {
 
     <section>
       <h2 class="section-title">Ranking de prioridades</h2>
-      <div class="card list">
-        ${priorities().map(({ id, muscle, score }) => `
-          <a class="row muscle-row ${id === selected ? "selected" : ""}" href="#cuerpo/${id}">
-            <div class="row-main">
-              <div class="row-head"><span>${muscle.name}</span><span class="row-score"><span class="num score">${score ?? "–"}</span>${score != null ? levelChip(score) : ""}</span></div>
-              ${bar(score)}
-            </div>
-            ${icon("chevron", "muted")}
-          </a>`).join("")}
-      </div>
+      <div class="card list">${ranking.slice(0, 5).map(rankRow).join("")}</div>
+      <details class="more-rank">
+        ${summary(`<span class="muted small">Los otros ${ranking.length - 5} músculos</span>`)}
+        <div class="card list">${ranking.slice(5).map(rankRow).join("")}</div>
+      </details>
     </section>
   `;
 

@@ -152,6 +152,16 @@ export function lessButton() {
   return `<button type="button" class="less-btn" data-collapse>${icon("up")} Ver menos</button>`;
 }
 
+// Acordeón: al abrir una sección se cierran las demás (menos información a la vez).
+export function exclusive(list) {
+  list.forEach((d) =>
+    d.addEventListener("toggle", () => {
+      if (!d.open) return;
+      list.forEach((o) => o !== d && (o.open = false));
+    })
+  );
+}
+
 // Aviso flotante (toast) que se oculta solo.
 let toastTimer = null;
 export function toast(html, ms = 6500) {

@@ -4,7 +4,7 @@ import { JOINTS, DIMENSIONS, SIDES, sidePhrase } from "../data/joints.js";
 import { TESTS_BY_ID } from "../data/tests.js";
 import * as store from "../store.js";
 import { jointPriorities, jointDimensions, asymmetryFlag, latestPains } from "../scoring.js";
-import { ring, bar, icon, levelChip, fmt, fmtDate, today, summary, lessButton } from "../ui.js";
+import { ring, bar, icon, levelChip, fmt, fmtDate, today, summary, lessButton, exclusive } from "../ui.js";
 import { openTestSheet } from "./test-sheet.js";
 import { drillChips, bindDrills } from "./exercise-sheet.js";
 import { openSheet, closeSheet } from "./sheet.js";
@@ -16,7 +16,7 @@ export function render(root) {
   root.innerHTML = `
     <header class="page-head">
       <h1 class="display">Blindaje</h1>
-      <p class="muted small">Las zonas que más se lesionan en ultimate. Cada una mide rango, fuerza y control, y si un lado es más débil que el otro.</p>
+      <p class="muted small">Las zonas que más se lesionan en ultimate, de la más vulnerable a la más fuerte. Toca una para ver qué hacer.</p>
     </header>
 
     ${active.map((i) => `
@@ -43,6 +43,7 @@ export function render(root) {
 
   root.querySelectorAll("[data-test]").forEach((b) => b.addEventListener("click", () => openTestSheet(b.dataset.test)));
   bindDrills(root);
+  exclusive(root.querySelectorAll("[data-acc]"));
   root.querySelector('[data-act="add-injury"]').addEventListener("click", () => openInjurySheet());
   root.querySelectorAll("[data-injury]").forEach((b) =>
     b.addEventListener("click", () => openInjurySheet(store.injuries().find((i) => i.id === b.dataset.injury)))
@@ -51,58 +52,64 @@ export function render(root) {
 
 function jointCard({ id, joint, score, injury, alerts }, i, mode) {
   const dims = jointDimensions(id);
+  const pain = latestPains()[id];
   const missing = [...Object.keys(joint.rango), ...Object.keys(joint.fuerza)].filter((t) => !store.latest(t));
   return `
-    <article class="card joint-card ${i === 0 ? "top" : ""}">
-      <div class="joint-head">
-        ${ring(score, { size: 72, stroke: 7 })}
+    <details class="card joint-acc ${i === 0 ? "top" : ""}" data-acc ${i === 0 ? "open" : ""}>
+      <summary>
+        ${ring(score, { size: 54, stroke: 6 })}
         <div class="joint-title">
-          <h2>${joint.name}</h2>
+          <span class="joint-name">${joint.name}</span>
           <div class="joint-tags">
             ${score != null ? levelChip(score) : `<span class="muted small">Sin datos</span>`}
-            ${injury ? `<span class="tag injury">${icon("bandage")} ${injury.status === "activa" ? "Lesión activa" : "Lesión previa"}</span>` : ""}
-            ${latestPains()[id] ? `<span class="tag pain ${latestPains()[id] >= 6 ? "high" : ""}">${icon("heart")} Dolor ${latestPains()[id]}/10 en el check-in</span>` : ""}
             ${i === 0 ? `<span class="tag focus-tag">Prioridad #1</span>` : ""}
+            ${injury ? `<span class="tag injury">${icon("bandage")} ${injury.status === "activa" ? "Lesión" : "Lesión previa"}</span>` : ""}
+            ${pain ? `<span class="tag pain ${pain >= 6 ? "high" : ""}">${icon("heart")} Dolor ${pain}/10</span>` : ""}
+            ${alerts.length ? `<span class="tag alert-tag">${icon("alert")} ${alerts.length}</span>` : ""}
           </div>
         </div>
-      </div>
+        <span class="chev" aria-hidden="true">${icon("down")}</span>
+      </summary>
 
-      <div class="dims">
-        ${Object.entries(DIMENSIONS).map(([d, name]) => {
-          const s = dims[d];
-          const notApplicable = d === "rango" && !Object.keys(joint.rango).length;
-          if (notApplicable) return "";
-          return `
-            <div class="dim">
-              <div class="row-head small"><span>${name}</span><span class="num">${s ?? "–"}</span></div>
-              ${bar(s)}
-            </div>`;
-        }).join("")}
-      </div>
+      <div class="joint-body">
+        <div class="dims">
+          ${Object.entries(DIMENSIONS).map(([d, name]) => {
+            if (d === "rango" && !Object.keys(joint.rango).length) return "";
+            const s = dims[d];
+            return `
+              <div class="dim">
+                <div class="row-head small"><span>${name}</span><span class="num">${s ?? "–"}</span></div>
+                ${bar(s)}
+              </div>`;
+          }).join("")}
+        </div>
 
-      ${alerts.length ? `
-        <ul class="alerts">
-          ${alerts.map((a) => `
-            <li class="${asymmetryFlag(a.pct)}">
-              <button data-test="${a.testId}">
-                ${icon("alert")}
-                <span><strong>${TESTS_BY_ID[a.testId].name}:</strong> ${a.weak === "L" ? "izquierda" : "derecha"} ${a.pct} % más débil
-                (I ${fmt(a.L, TESTS_BY_ID[a.testId].decimals)} · D ${fmt(a.R, TESTS_BY_ID[a.testId].decimals)})</span>
-              </button>
-            </li>`).join("")}
-        </ul>` : ""}
+        ${alerts.length ? `
+          <ul class="alerts">
+            ${alerts.map((a) => `
+              <li class="${asymmetryFlag(a.pct)}">
+                <button data-test="${a.testId}">
+                  ${icon("alert")}
+                  <span><strong>${TESTS_BY_ID[a.testId].name}:</strong> ${a.weak === "L" ? "izquierda" : "derecha"} ${a.pct} % más débil
+                  (I ${fmt(a.L, TESTS_BY_ID[a.testId].decimals)} · D ${fmt(a.R, TESTS_BY_ID[a.testId].decimals)})</span>
+                </button>
+              </li>`).join("")}
+          </ul>` : ""}
 
-      <details class="joint-more" ${i === 0 ? "open" : ""}>
-        ${summary("Por qué importa y qué hacer")}
-        <p class="why">${joint.why}</p>
         <h3 class="subhead">Blindaje · ${mode === "gym" ? "gimnasio" : "casa"}</h3>
         ${drillChips(joint.drills[mode])}
+
         ${missing.length ? `
           <h3 class="subhead">Falta medir</h3>
           <div class="btn-row">${missing.map((t) => `<button class="add-pill" data-test="${t}">${icon("plus")} ${TESTS_BY_ID[t].name}</button>`).join("")}</div>` : ""}
+
+        <details class="why-more">
+          ${summary("Por qué importa")}
+          <p class="why">${joint.why}</p>
+        </details>
         ${lessButton()}
-      </details>
-    </article>`;
+      </div>
+    </details>`;
 }
 
 function injuryRow(i) {

@@ -1,6 +1,7 @@
 // Perfil del atleta. La primera vez que se abre la app funciona como bienvenida.
 import * as store from "../store.js";
 import { POSITIONS, jumpPower, ageFactor } from "../scoring.js";
+import { buildDemo } from "../data/demo.js";
 import { icon, today, fmtDate, sparkline, toast } from "../ui.js";
 
 const POSITION_HELP = {
@@ -98,7 +99,9 @@ export function render(root, param) {
     </form>
 
     ${welcome ? "" : weightSection()}
+    ${welcome ? "" : dataSection()}
   `;
+  if (!welcome) bindData(root);
 
   const form = root.querySelector(".profile-form");
   form.addEventListener("input", (e) => {
@@ -182,6 +185,49 @@ function weightSection() {
           </div>
         </div>` : ""}
     </section>`;
+}
+
+function dataSection() {
+  return `
+    <section>
+      <h2 class="section-title">Tus datos</h2>
+      <div class="card data-card">
+        <p class="muted small">Se guardan solo en este celular. Haz un respaldo para pasarlos a otro dispositivo o no perderlos.</p>
+        <div class="btn-row">
+          <button class="btn secondary" data-act="export">${icon("download")} Respaldar</button>
+          <label class="btn secondary">${icon("upload")} Restaurar<input type="file" accept="application/json" data-act="import" hidden></label>
+          ${store.hasDemo()
+            ? `<button class="btn ghost" data-act="clear-demo">Quitar ejemplo</button>`
+            : `<button class="btn ghost" data-act="demo">Cargar ejemplo</button>`}
+        </div>
+      </div>
+    </section>`;
+}
+
+function bindData(root) {
+  root.querySelector('[data-act="demo"]')?.addEventListener("click", () => {
+    store.loadDemo(buildDemo());
+    location.hash = "#inicio";
+  });
+  root.querySelector('[data-act="clear-demo"]')?.addEventListener("click", () => store.clearDemo());
+  root.querySelector('[data-act="export"]').addEventListener("click", () => {
+    const blob = new Blob([store.exportJSON()], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `ulti-coach-respaldo-${today()}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+  root.querySelector('[data-act="import"]').addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      store.importJSON(await file.text());
+      toast(`<div class="toast-head"><span>${icon("check")} Datos restaurados</span></div>`, 3000);
+    } catch {
+      alert("Ese archivo no es un respaldo válido de Ulti Coach.");
+    }
+  });
 }
 
 function normalize(values) {

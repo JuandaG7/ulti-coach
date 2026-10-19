@@ -559,6 +559,54 @@ details:not([open]) .when-open, details[open] .when-closed { display: none; }
 .jump-height small { font-family: var(--font-body); font-size: 0.8rem; color: var(--muted); margin-left: 3px; }
 .field.prefilled input { outline: 2px solid var(--t4); }
 
+/* ---------- Inicio simplificado ---------- */
+.score-card { display: flex; flex-direction: row; align-items: center; gap: 16px; padding: 18px 18px 18px 20px; }
+.score-card .score-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.score-card .display { font-size: 2.3rem; }
+.score-card.tier-t4 { border-color: rgba(226, 194, 126, 0.5); box-shadow: var(--card-shadow), 0 0 32px rgba(226, 194, 126, 0.12); }
+.score-card.tier-t4 .display { color: var(--gold); }
+.step-card { display: flex; flex-direction: column; gap: 8px; border-color: rgba(233, 223, 198, 0.35); }
+.step-title { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; line-height: 1.1; }
+.step-card .btn { margin-top: 8px; }
+.step-alert { display: flex; gap: 8px; align-items: flex-start; padding: 10px 12px; border-radius: 16px; background: rgba(240, 138, 126, 0.12); color: #f8c7c0; font-size: 0.86rem; }
+.step-alert .icon { width: 16px; height: 16px; color: var(--bad); flex: none; margin-top: 2px; }
+.focus-card { display: flex; flex-direction: column; gap: 12px; }
+.focus-line { display: flex; align-items: center; gap: 12px; color: inherit; }
+.focus-rest { display: grid; gap: 12px; padding-top: 10px; }
+.more-focus > summary { min-height: 36px; }
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.tile { display: flex; flex-direction: column; gap: 2px; padding: 14px 12px; text-align: left; min-height: 96px; transition: transform .12s var(--ease); }
+.tile:active { transform: scale(0.97); }
+.tile .eyebrow { font-size: 0.66rem; }
+.tile-value { font-family: var(--font-display); font-size: 1.45rem; font-weight: 700; line-height: 1.1; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tile-value small { font-family: var(--font-body); font-size: 0.7rem; color: var(--muted); margin-left: 2px; }
+.tile .small { font-size: 0.76rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------- Acordeones (Pruebas y Blindaje) ---------- */
+.cat-list, .joint-list { display: grid; gap: 14px; }
+.cat-acc, .joint-acc { padding: 0; }
+.cat-acc > summary, .joint-acc > summary { list-style: none; cursor: pointer; padding: 18px 20px; }
+.cat-acc > summary::-webkit-details-marker, .joint-acc > summary::-webkit-details-marker { display: none; }
+.cat-head { display: flex; flex-direction: column; gap: 8px; }
+.cat-name { font-weight: 600; font-size: 1.05rem; }
+.cat-acc[open] { border-color: #2e4a3e; }
+.list.inner { padding: 0 12px 12px; gap: 8px; }
+.list.inner > .row { box-shadow: none; background: var(--surface-2); border-color: transparent; border-radius: 18px; padding: 12px 14px; }
+.joint-acc > summary { display: flex; align-items: center; gap: 14px; }
+.joint-acc .joint-title { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.joint-name { font-family: var(--font-display); font-size: 1.45rem; font-weight: 700; line-height: 1; }
+.joint-acc .chev { color: var(--muted); transition: transform .2s var(--ease); }
+.joint-acc[open] .chev { transform: rotate(180deg); }
+.joint-acc.top { border-color: rgba(140, 199, 160, 0.45); }
+.joint-body { display: flex; flex-direction: column; gap: 14px; padding: 0 20px 20px; }
+.joint-body .subhead { margin: 6px 0 0; }
+.tag.alert-tag { background: rgba(242, 196, 109, 0.14); color: var(--warn); }
+.why-more > summary { color: var(--text-2); font-size: 0.92rem; }
+.more-rank > summary { margin-bottom: 10px; }
+.sheet-sections { display: grid; gap: 10px; margin-top: 16px; }
+.sheet-sections .protocol { margin-top: 0; }
+.protocol .video-btn { margin-top: 12px; }
+
 /* ---------- Aviso flotante ---------- */
 .toast {
   position: fixed; left: 50%; bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 14px); z-index: 100;

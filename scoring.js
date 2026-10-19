@@ -266,3 +266,49 @@ export function checkinInsights(c, prev) {
   if (!out.length && w >= 75) out.push({ level: "good", text: "Buena semana: estás fresco. Buen momento para medirte o subir un poco la intensidad." });
   return out;
 }
+
+// ---------- Qué hacer ahora ----------
+
+// Qué tanto aporta medir una prueba: suma la importancia de los músculos y zonas que califica.
+function testRelevance(testId) {
+  let r = 0;
+  for (const [id, m] of Object.entries(MUSCLES)) if (testId in m.tests) r += muscleImportance(id) * m.tests[testId];
+  for (const j of Object.values(JOINTS)) if (testId in j.rango || testId in j.fuerza) r += j.importance * 0.5;
+  return r;
+}
+
+const daysSince = (iso) => Math.floor((Date.now() - new Date(iso + "T12:00:00").getTime()) / 86400000);
+
+// Pruebas para medir ahora: primero las importantes que nunca mediste, luego las que hace más
+// de 3 semanas no repites. Se saltan las que cargan una zona con lesión activa.
+export function suggestedTests(n = 3) {
+  const injured = new Set(injuries().filter((i) => i.status === "activa").map((i) => i.zone));
+  const blocked = (testId) =>
+    Object.entries(JOINTS).some(([z, j]) => injured.has(z) && (testId in j.rango || testId in j.fuerza || j.simetria.includes(testId)));
+  const candidates = TESTS.filter((t) => !blocked(t.id)).map((t) => {
+    const last = latest(t.id);
+    const age = last ? daysSince(last.date) : null;
+    const rank = last == null ? 1000 + testRelevance(t.id) * 100 : age >= 21 ? age + testRelevance(t.id) * 10 : -1;
+    return { test: t, last, age, rank };
+  });
+  return candidates.filter((c) => c.rank >= 0).sort((a, b) => b.rank - a.rank).slice(0, n);
+}
+
+// La única acción que la app recomienda para hoy.
+export function nextStep({ checkinDone, wellnessNow }) {
+  if (!checkinDone) {
+    return { kind: "checkin", title: "Haz tu check-in de la semana", text: "1 minuto. Sin él no sabemos si estás fresco o cansado." };
+  }
+  if (wellnessNow != null && wellnessNow < 50) {
+    return { kind: "rest", title: "Semana de recuperar", text: "Tu bienestar está bajo: hoy movilidad y blindaje suave, nada de pruebas máximas." };
+  }
+  const [s] = suggestedTests(1);
+  if (s && s.last == null) {
+    return { kind: "test", testId: s.test.id, title: `Mide: ${s.test.name}`, text: "Es la prueba que más información le da a tu plan ahora." };
+  }
+  if (s) {
+    return { kind: "test", testId: s.test.id, title: `Repite: ${s.test.name}`, text: `Hace ${s.age} días que no la mides. Mira si mejoraste.` };
+  }
+  const top = priorities()[0];
+  return { kind: "train", muscleId: top.id, title: `Entrena tu foco: ${top.muscle.name}`, text: "Estás al día con las pruebas. Hoy toca subir tu punto más débil." };
+}

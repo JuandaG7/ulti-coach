@@ -54,12 +54,6 @@ function render(root, testId) {
       <span class="muted">${lowerIsBetter ? "Menos es mejor" : "Más es mejor"}</span>
     </div>
 
-    ${list.length >= 3
-      ? historyChart(list, test, tgt)
-      : list.length
-        ? `<p class="muted small chart-hint">Con 3 mediciones aparece tu gráfica de progreso.</p>`
-        : ""}
-
     ${safetyBlock(test)}
 
     ${test.timer ? timerBlock(test) : ""}
@@ -75,17 +69,24 @@ function render(root, testId) {
       <button type="submit" class="btn primary">${icon("plus")} Registrar</button>
     </form>
 
-    <details class="protocol" ${list.length ? "" : "open"}>
-      ${summary("Cómo hacer la prueba")}
-      <p>${test.how}</p>
-    </details>
-    <a class="btn secondary block video-btn" href="https://www.youtube.com/results?search_query=${encodeURIComponent(test.video)}" target="_blank" rel="noopener">${icon("video")} Ver cómo se hace en YouTube</a>
+    ${list.length >= 3 ? historyChart(list, test, tgt) : ""}
 
-    ${list.length ? `
-      <h3 class="subhead">Historial ${best && list.length > 1 ? `<span class="muted small">· mejor: <span class="num">${fmt(best.value, test.decimals)} ${test.unit}</span></span>` : ""}</h3>
-      <ul class="history-list">
-        ${[...list].reverse().map((e) => (editing === e.id ? editRow(e, test) : historyRow(e, test, e === best && list.length > 1))).join("")}
-      </ul>` : ""}
+    <div class="sheet-sections">
+      <details class="protocol" ${list.length ? "" : "open"}>
+        ${summary("Cómo se hace")}
+        <p>${test.how}</p>
+        <a class="btn secondary block video-btn" href="https://www.youtube.com/results?search_query=${encodeURIComponent(test.video)}" target="_blank" rel="noopener">${icon("video")} Ver video en YouTube</a>
+      </details>
+
+      ${list.length ? `
+        <details class="protocol" ${editing ? "open" : ""}>
+          ${summary(`Historial · ${list.length}${best && list.length > 1 ? ` <span class="muted small">(mejor ${fmt(best.value, test.decimals)} ${test.unit})</span>` : ""}`)}
+          ${list.length < 3 ? `<p class="muted small">Con 3 mediciones aparece tu gráfica de progreso.</p>` : ""}
+          <ul class="history-list">
+            ${[...list].reverse().map((e) => (editing === e.id ? editRow(e, test) : historyRow(e, test, e === best && list.length > 1))).join("")}
+          </ul>
+        </details>` : ""}
+    </div>
   `;
 
   bindForm(root, testId, test);
