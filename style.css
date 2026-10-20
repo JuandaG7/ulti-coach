@@ -626,6 +626,7 @@ details:not([open]) .when-open, details[open] .when-closed { display: none; }
 
 /* ---------- Video ---------- */
 .status { margin-top: 12px; }
+.status:empty { display: none; }
 progress { width: 100%; margin-top: 8px; accent-color: var(--accent); }
 .stage { position: relative; width: 100%; background: #000; border-radius: var(--radius-sm); overflow: hidden; isolation: isolate; -webkit-mask-image: -webkit-radial-gradient(white, black); transform: translateZ(0); }
 .stage video { display: block; width: 100%; height: auto; background: #000; }
@@ -635,6 +636,51 @@ progress { width: 100%; margin-top: 8px; accent-color: var(--accent); }
 .controls select { min-height: 44px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 0 8px; }
 #chart { width: 100%; height: 160px; display: block; background: var(--bg); border-radius: var(--radius-sm); cursor: crosshair; margin-bottom: 8px; }
 #viewer .btn { margin-top: 12px; }
+
+/* ---------- Forehand vs pros ---------- */
+.btn.disabled { opacity: 0.5; pointer-events: none; }
+.fh { display: flex; flex-direction: column; gap: 40px; }
+.fh-result { display: flex; flex-direction: column; gap: 20px; }
+.fh .banner.warn { display: flex; gap: 10px; align-items: flex-start; }
+.fh select { min-height: 44px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 0 10px; font: inherit; }
+.fh input[type=text] { min-height: 48px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 12px; padding: 0 14px; font: inherit; }
+.duo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.duo figure { margin: 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.duo figcaption { font-size: 0.82rem; font-weight: 600; color: var(--text-2); text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.duo .stage { max-height: 62vh; }
+.duo .stage video { width: 100%; height: 100%; object-fit: contain; }
+.stage.skeleton { background: radial-gradient(120% 90% at 50% 20%, #132a21, #06140f); }
+.stage.skeleton video { display: none; }
+.stage-empty { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 12px; }
+.sync-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.tau { font-size: 1.15rem; }
+.btn[aria-pressed="true"] { background: var(--surface-3); color: var(--text); }
+.chain-chart { width: 100%; height: 170px; display: block; background: var(--bg); border-radius: var(--radius-sm); cursor: crosshair; }
+.chain-legend { justify-content: flex-start; }
+.chain-legend i.pro-tick { width: 3px; height: 12px; border-radius: 2px; background: var(--text-2); }
+.chain-text { display: inline-flex; gap: 8px; align-items: flex-start; color: var(--text-2); }
+.chain-text .icon { width: 18px; height: 18px; margin-top: 2px; color: var(--accent); }
+.vs-head { display: flex; align-items: center; gap: 16px; }
+.vs-head > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.vs-head.tier-t4 .section-title { color: var(--gold); }
+.metric-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.metric-list > li + li { border-top: 1px solid var(--border); }
+.metric > summary { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "name you" "pro level"; gap: 2px 12px; align-items: center; padding: 12px 0; cursor: pointer; }
+.metric > p { padding: 0 0 12px; }
+.metric-name { grid-area: name; font-weight: 600; overflow-wrap: anywhere; }
+.metric-you { grid-area: you; font-size: 1.35rem; font-weight: 700; text-align: right; white-space: nowrap; }
+.metric-you small { font-family: var(--font-body); font-size: 0.72rem; color: var(--muted); margin-left: 3px; font-weight: 500; }
+.metric-pro { grid-area: pro; }
+.metric-level { grid-area: level; justify-self: end; }
+[data-focus] .chips { margin: 4px 0; }
+.lib-body { display: flex; flex-direction: column; gap: 16px; margin-top: 14px; }
+.work-video { position: absolute; width: 2px; height: 2px; opacity: 0; pointer-events: none; }
+.clip-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; }
+.clip-row { display: flex; align-items: center; gap: 8px; }
+.clip-row + .clip-row { border-top: 1px solid var(--border); }
+.clip-main { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 12px 0; text-align: left; }
+.clip-name { font-weight: 600; overflow-wrap: anywhere; }
+.clip-main .icon { width: 14px; height: 14px; vertical-align: -2px; color: var(--warn); }
 
 /* ---------- Pantallas grandes ---------- */
 @media (min-width: 560px) {
