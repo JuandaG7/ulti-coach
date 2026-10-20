@@ -10,8 +10,9 @@ import {
   proBand, scoreVsPro, gapSide,
 } from "../forehand.js";
 import { listClips, saveClip, deleteClip } from "../clips.js";
-import { icon, levelChip, ring, today, fmtDate, tierClass } from "../ui.js";
+import { icon, levelChip, ring, today, fmtDate, tierClass, toast } from "../ui.js";
 import { drillChips, bindDrills } from "./exercise-sheet.js";
+import { openForehandGuide } from "./forehand-guide.js";
 
 const MAX_SECONDS = 20;
 const SPEEDS = [
@@ -30,6 +31,17 @@ const CHAIN = [
   { key: "wrist", name: "Muñeca", color: "#e3ecd0" },
 ];
 
+// Dónde encontrar lanzamientos de pros. Son búsquedas (no videos fijos): siempre traen resultados actuales.
+const yt = (q) => `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
+const PRO_SOURCES = [
+  { label: "Forehand en cámara lenta", url: yt("ultimate frisbee forehand slow motion") },
+  { label: "Hucks de forehand", url: yt("ultimate frisbee forehand huck") },
+  { label: "Liga pro de EE. UU. (UFA)", url: yt("UFA ultimate frisbee highlights") },
+  { label: "Mundiales WFDF", url: yt("WFDF world ultimate championships highlights") },
+  { label: "TikTok #ultimatefrisbee", url: "https://www.tiktok.com/tag/ultimatefrisbee" },
+  { label: "Instagram #ultimatefrisbee", url: "https://www.instagram.com/explore/tags/ultimatefrisbee/" },
+];
+
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const fmtVal = (m, v) => (v == null ? "–" : `${Number(v).toFixed(m.decimals)}`);
 
@@ -46,6 +58,7 @@ let proId = null;
 let mirror = false;
 let tau = 0;
 let playing = false;
+let lastScores = {}; // puntajes del análisis en pantalla, para la guía
 
 const myHand = () => profile()?.hand ?? "R";
 const analysisOf = (clip) => {
@@ -86,6 +99,7 @@ function build() {
       </label>
       <p class="muted small status" data-status="mine">Cargando modelo de pose…</p>
       <progress value="0" max="1" hidden data-progress="mine"></progress>
+      <button type="button" class="btn ghost block" data-act="guide">${icon("target")} Cómo es un buen forehand</button>
     </section>
 
     <div class="fh-result" hidden data-result>
@@ -151,7 +165,23 @@ function build() {
       <details data-lib>
         <summary><span class="summary-label"><span class="eyebrow">Biblioteca pro</span> <span class="num" data-pro-count>0</span></span><span class="toggle"><span class="when-closed">Ver más</span><span class="when-open">Ver menos</span>${icon("down")}</span></summary>
         <div class="lib-body">
-          <p class="muted small">Graba la pantalla con un lanzamiento de un pro (clip de 2–8 s, cuerpo completo, ojalá de lado). El video <strong>no se guarda</strong>: solo el esqueleto y las métricas, y solo en este celular.</p>
+          <div class="lib-start">
+            <p class="eyebrow">La forma rápida</p>
+            <p class="small">Si alguien de tu equipo ya armó su biblioteca, pídele que la comparta y la cargas aquí en un toque.</p>
+            <label class="btn secondary block">${icon("upload")} Cargar biblioteca del equipo<input type="file" accept="application/json,.json" hidden data-import></label>
+          </div>
+
+          <div class="lib-sources">
+            <p class="eyebrow">Agregar un pro en 1 minuto</p>
+            <ol class="tips">
+              <li>Abre una búsqueda y elige un forehand donde se vea <strong>todo el cuerpo</strong>, ojalá de lado.</li>
+              <li><strong>Graba la pantalla</strong> (Centro de control → botón de grabar) mientras pasa el lanzamiento.</li>
+              <li>En Fotos: <strong>Editar → recorta</strong> a 2–8 s, desde antes del armado.</li>
+              <li>Vuelve aquí y toca <strong>Agregar clip de pro</strong>.</li>
+            </ol>
+            <ul class="source-links">${PRO_SOURCES.map((x) => `<li><a href="${x.url}" target="_blank" rel="noopener">${x.label}${icon("chevron")}</a></li>`).join("")}</ul>
+            <p class="muted small">¿Te salió un lanzamiento brutal en TikTok o Instagram? Grábalo igual y agrégalo. El video <strong>no se guarda</strong>: solo el esqueleto y las métricas, y solo en este celular.</p>
+          </div>
           <label class="field"><span>Nombre</span><input type="text" maxlength="40" placeholder="Ej.: handler de selección, final 2024" data-pro-name-input></label>
           <fieldset class="field">
             <legend>Mano con la que lanza</legend>
@@ -172,6 +202,7 @@ function build() {
           <progress value="0" max="1" hidden data-progress="pro"></progress>
           <video class="work-video" playsinline muted preload="auto" data-work></video>
           <ul class="clip-list" data-pro-list></ul>
+          <button type="button" class="btn ghost block" data-act="share-lib" hidden>${icon("upload")} Compartir biblioteca con mi equipo</button>
         </div>
       </details>
     </section>
@@ -324,9 +355,25 @@ function wire() {
     lock(false);
   });
 
+  // Biblioteca compartida por el equipo
+  $("[data-import]").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      const added = await importLibrary(await file.text());
+      toast(added ? `${icon("check")} ${added} clip${added > 1 ? "s" : ""} de pros cargado${added > 1 ? "s" : ""}.` : "Esos clips ya estaban en tu biblioteca.");
+    } catch (err) {
+      console.error(err);
+      toast(`${icon("alert")} Ese archivo no es una biblioteca de Ulti Coach.`);
+    }
+  });
+
   // Listas: abrir o borrar (y el atajo a la biblioteca desde la tabla)
   el.addEventListener("click", async (e) => {
     if (e.target.closest('[data-act="open-lib"]')) return openLib();
+    if (e.target.closest('[data-act="guide"]')) return openForehandGuide(current ? lastScores : {});
+    if (e.target.closest('[data-act="share-lib"]')) return shareLibrary();
     const del = e.target.closest("[data-del]");
     if (del) {
       if (!confirm("¿Borrar este clip? Se pierden su esqueleto y sus métricas.")) return;
@@ -517,6 +564,7 @@ function paintResult() {
   const scored = rows.filter((r) => r.score != null);
   const overall = scored.length ? Math.round(scored.reduce((s, r) => s + r.score, 0) / scored.length) : null;
 
+  lastScores = Object.fromEntries(rows.map((r) => [r.m.id, r.score]));
   $("[data-vs-pro]").innerHTML = vsProCard(rows, overall, usable.length);
   paintFocus(rows);
   $("[data-own]").innerHTML = ownCard(clip, a);
@@ -528,7 +576,8 @@ function vsProCard(rows, overall, n) {
   if (!n) {
     return `
       <h2 class="section-title">Tú vs rango pro</h2>
-      <p class="muted">Todavía no hay clips de pros. Agrega al menos 3 en la <button type="button" class="link" data-act="open-lib">Biblioteca pro</button> para ver tu nivel en cada métrica.</p>
+      <p class="muted">Para ver tu nivel en cada métrica falta con quién compararte. Carga la biblioteca de tu equipo o agrega 3 lanzamientos de pros: hay links listos.</p>
+      <button type="button" class="btn primary block" data-act="open-lib">${icon("plus")} Armar mi biblioteca pro</button>
       <ul class="metric-list">${rows.map(({ m, value }) => metricRow(m, value, null, null)).join("")}</ul>`;
   }
   return `
@@ -587,6 +636,7 @@ function paintFocus(rows) {
     <p class="small">${m[side]}</p>
     ${drillChips(m.drills)}
     ${muscle ? `<a class="btn secondary block" href="#cuerpo/${m.muscle}">${icon("body")} Ver ${muscle.name.toLowerCase()} en Cuerpo</a>` : ""}
+    <button type="button" class="link" data-act="guide">Ver la guía del forehand</button>
     ${gaps.length > 1 ? `<p class="muted small">También: ${gaps.slice(1, 3).map((g) => g.m.name.toLowerCase()).join(" y ")}.</p>` : ""}`;
   bindDrills(box);
 }
@@ -816,6 +866,7 @@ function drawChain() {
 
 function paintLists() {
   $("[data-pro-count]").textContent = pros.length;
+  $('[data-act="share-lib"]').hidden = !pros.length;
   $("[data-mine-count]").textContent = mine.length;
   $("[data-pro-list]").innerHTML = pros.length
     ? pros.map((c) => {
@@ -850,4 +901,45 @@ function openLib() {
   const lib = $("[data-lib]");
   lib.open = true;
   lib.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+// ---------- Compartir la biblioteca ----------
+// Se comparte como archivo (WhatsApp, AirDrop): nunca pasa por el repositorio ni por un servidor.
+const LIB_TYPE = "ulti-coach/biblioteca-pro";
+
+async function shareLibrary() {
+  // 3 decimales (≈ 1 mm) bastan para las métricas y el archivo pesa menos.
+  const r3 = (v) => Math.round(v * 1000) / 1000;
+  const slim = (f) => ({ t: r3(f.t), p: f.p && f.p.map(r3), w: f.w && f.w.map(r3) });
+  const data = { type: LIB_TYPE, version: 1, clips: pros.map(({ id, name, date, hand, factor, w, h, frames }) => ({ id, name, date, hand, factor, w, h, frames: frames.map(slim) })) };
+  const file = new File([JSON.stringify(data)], "biblioteca-pro-ulti-coach.json", { type: "application/json" });
+  if (navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: "Biblioteca pro · Ulti Coach" });
+      return;
+    } catch (err) {
+      if (err.name === "AbortError") return;
+    }
+  }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(file);
+  a.download = file.name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+async function importLibrary(text) {
+  const data = JSON.parse(text);
+  if (data.type !== LIB_TYPE || !Array.isArray(data.clips)) throw new Error("formato");
+  const have = new Set(pros.map((c) => c.id));
+  let added = 0;
+  for (const c of data.clips) {
+    if (!Array.isArray(c.frames) || !c.frames.length || have.has(c.id)) continue;
+    const saved = await saveClip({ id: c.id, kind: "pro", name: String(c.name ?? "Pro").slice(0, 40), date: c.date ?? today(), hand: c.hand === "L" ? "L" : "R", factor: c.factor ?? 1, w: c.w, h: c.h, frames: c.frames });
+    pros.unshift(saved);
+    added++;
+  }
+  paintLists();
+  if (current) paintResult();
+  return added;
 }

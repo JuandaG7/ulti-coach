@@ -682,6 +682,25 @@ progress { width: 100%; margin-top: 8px; accent-color: var(--accent); }
 .clip-name { font-weight: 600; overflow-wrap: anywhere; }
 .clip-main .icon { width: 14px; height: 14px; vertical-align: -2px; color: var(--warn); }
 
+.lib-start { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: var(--radius-sm); background: var(--surface-2); }
+.lib-sources { display: flex; flex-direction: column; gap: 10px; }
+.lib-sources .tips { margin: 0; }
+.source-links { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.source-links a { display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 0 14px; border-radius: 99px; border: 1px solid var(--border); background: var(--surface); font-size: 0.88rem; font-weight: 500; color: var(--text-2); }
+.source-links a:active { background: var(--surface-3); }
+.source-links .icon { width: 14px; height: 14px; color: var(--muted); }
+[data-focus] .link { align-self: flex-start; }
+.guide-intro { margin: -6px 0 16px; }
+.guide { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.guide-phase { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-radius: var(--radius-sm); background: var(--surface-2); color: var(--text-2); font-size: 0.94rem; }
+.guide-head { display: flex; align-items: center; gap: 10px; color: var(--text); font-size: 1.02rem; }
+.guide-head .focus-rank { width: 28px; height: 28px; font-size: 1rem; }
+.guide-error { display: flex; gap: 8px; align-items: flex-start; }
+.guide-error .icon { width: 16px; height: 16px; margin-top: 3px; color: var(--warn); }
+.guide-phase .icon { width: 15px; height: 15px; vertical-align: -2px; }
+.guide-metrics { list-style: none; margin: 4px 0 0; padding: 8px 0 0; border-top: 1px solid var(--border); display: grid; gap: 6px; }
+.guide-metrics li { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 0.88rem; }
+
 /* ---------- Pantallas grandes ---------- */
 @media (min-width: 560px) {
   .trend { display: inline-flex; }
