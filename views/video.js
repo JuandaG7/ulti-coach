@@ -56,6 +56,7 @@ const analyses = new Map(); // id → análisis (se recalcula del esqueleto guar
 let current = null; // { clip, a, video: bool, release, factor }
 let proId = null;
 let mirror = false;
+let overlay = false; // los dos esqueletos uno encima del otro, alineados por la cadera
 let tau = 0;
 let playing = false;
 let lastScores = {}; // puntajes del análisis en pantalla, para la guía
@@ -106,26 +107,33 @@ function build() {
       <div class="banner warn" hidden data-warn></div>
 
       <section class="card">
-        <div class="section-title-row">
-          <h2 class="section-title">Lado a lado</h2>
-          <button type="button" class="btn ghost small-btn" data-act="mirror" aria-pressed="false">Espejo</button>
-        </div>
+        <h2 class="section-title duo-title" data-duo-title>Tú vs. pro</h2>
+        <p class="muted small section-sub" data-duo-sub></p>
         <label class="field" data-pro-pick hidden>
           <span>Comparar con</span>
           <select data-pro-select></select>
         </label>
-        <div class="duo">
+        <div class="duo-tools" data-duo-tools>
+          <button type="button" class="btn ghost small-btn" data-act="overlay" aria-pressed="false">Superponer</button>
+          <button type="button" class="btn ghost small-btn" data-act="mirror" aria-pressed="false">Espejo</button>
+        </div>
+        <div class="duo-empty" data-pro-empty hidden>
+          <p class="step-title">Todavía no hay lanzamientos de pros para comparar</p>
+          <p class="muted small">Carga la biblioteca que armó tu equipo o agrega un pro desde un video. Mientras tanto, abajo ves tu esqueleto y tu cadena de lanzamiento.</p>
+          <label class="btn primary block">${icon("upload")} Cargar biblioteca del equipo<input type="file" accept="application/json,.json" hidden data-import></label>
+          <button type="button" class="btn secondary block" data-act="open-lib">${icon("video")} Buscar videos de pros</button>
+        </div>
+        <div class="duo" data-duo>
           <figure>
             <div class="stage" data-stage="me">
               <video playsinline muted preload="auto"></video>
               <canvas data-canvas="me"></canvas>
             </div>
-            <figcaption>Tú</figcaption>
+            <figcaption><i class="dot me"></i>Tú</figcaption>
           </figure>
-          <figure>
+          <figure data-pro-fig>
             <div class="stage skeleton" data-stage="pro">
               <canvas data-canvas="pro"></canvas>
-              <p class="stage-empty muted small" data-pro-empty>Agrega un clip en la Biblioteca pro</p>
             </div>
             <figcaption data-pro-name>Pro</figcaption>
           </figure>
@@ -143,7 +151,6 @@ function build() {
           <span class="num tau" data-tau>0 ms</span>
           <button type="button" class="link" data-act="release">Ir a la suelta</button>
         </div>
-        <p class="muted small">Los dos videos están sincronizados en el momento de soltar (0 ms). Del pro solo se guardó el esqueleto.</p>
       </section>
 
       <section class="card">
@@ -356,7 +363,7 @@ function wire() {
   });
 
   // Biblioteca compartida por el equipo
-  $("[data-import]").addEventListener("change", async (e) => {
+  for (const input of el.querySelectorAll("[data-import]")) input.addEventListener("change", async (e) => {
     const file = e.target.files[0];
     e.target.value = "";
     if (!file) return;
@@ -422,6 +429,11 @@ function wire() {
   $('[data-act="release"]').addEventListener("click", () => {
     pause();
     setTau(0);
+  });
+  $('[data-act="overlay"]').addEventListener("click", () => {
+    overlay = !overlay;
+    paintDuo(pros.find((c) => c.id === proId));
+    draw();
   });
   $('[data-act="mirror"]').addEventListener("click", () => {
     mirror = !mirror;
@@ -543,8 +555,7 @@ function paintResult() {
   const proStage = $('[data-stage="pro"]');
   meStage.style.aspectRatio = `${clip.w} / ${clip.h}`;
   proStage.style.aspectRatio = `${clip.w} / ${clip.h}`;
-  $("[data-pro-empty]").hidden = !!pro;
-  $("[data-pro-name]").textContent = pro ? pro.name : "Pro";
+  paintDuo(pro);
   $("[data-pro-pick]").hidden = usable.length < 2;
   $("[data-pro-select]").innerHTML = usable.map((c) => `<option value="${c.id}" ${c.id === proId ? "selected" : ""}>${esc(c.name)}</option>`).join("");
   const seek = $("[data-seek]");
@@ -565,14 +576,36 @@ function paintResult() {
   const overall = scored.length ? Math.round(scored.reduce((s, r) => s + r.score, 0) / scored.length) : null;
 
   lastScores = Object.fromEntries(rows.map((r) => [r.m.id, r.score]));
-  $("[data-vs-pro]").innerHTML = vsProCard(rows, overall, usable.length);
+  $("[data-vs-pro]").innerHTML = vsProCard(rows, overall, usable);
   paintFocus(rows);
   $("[data-own]").innerHTML = ownCard(clip, a);
   paintChainText(a);
   layout();
 }
 
-function vsProCard(rows, overall, n) {
+// Título, explicación y leyenda del lado a lado: que se entienda con quién te comparas.
+function paintDuo(pro) {
+  const name = pro ? esc(pro.name) : "";
+  $("[data-duo-title]").textContent = pro ? `Tú vs. ${pro.name}` : "Tu forehand";
+  $("[data-duo-tools]").hidden = !pro;
+  $("[data-pro-fig]").hidden = !pro;
+  $("[data-duo]").classList.toggle("solo", !pro);
+  $("[data-pro-empty]").hidden = !!pro;
+  $('[data-act="overlay"]').setAttribute("aria-pressed", overlay);
+  $("[data-duo-sub]").innerHTML = !pro
+    ? current?.video ? "Tu esqueleto, dibujado sobre tu video." : "Tu esqueleto (el video no se guarda)."
+    : overlay
+      ? `Tu esqueleto (verde) y el de <strong>${name}</strong> (beige), uno encima del otro y alineados por la cadera. Donde se separan, ahí está la diferencia.`
+      : `A la derecha, el movimiento de <strong>${name}</strong>. Mostramos solo su esqueleto porque el video no se guarda. Los dos están sincronizados en el momento de soltar (0 ms).`;
+  $("[data-pro-name]").innerHTML = !pro
+    ? ""
+    : overlay
+      ? `<i class="dot me"></i>Tú <i class="dot pro"></i>${name}`
+      : `<i class="dot pro"></i>${name}`;
+}
+
+function vsProCard(rows, overall, usable) {
+  const n = usable.length;
   if (!n) {
     return `
       <h2 class="section-title">Tú vs rango pro</h2>
@@ -586,7 +619,7 @@ function vsProCard(rows, overall, n) {
       <div>
         <p class="eyebrow">Tú vs rango pro</p>
         <h2 class="section-title">${level(overall).name}</h2>
-        <p class="muted small">Contra ${n} clip${n > 1 ? "s" : ""} de pros${n < 3 ? " · con menos de 3 el rango es preliminar" : ""}</p>
+        <p class="muted small">Te comparamos con ${n} lanzamiento${n > 1 ? "s" : ""} de pros de tu biblioteca: ${usable.slice(0, 3).map((c) => esc(c.name)).join(", ")}${n > 3 ? ` y ${n - 3} más` : ""}.${n < 3 ? " Con menos de 3 el rango es preliminar." : ""}</p>
       </div>
     </div>
     <ul class="metric-list">${rows.map(({ m, value, band, score }) => metricRow(m, value, band, score)).join("")}</ul>
@@ -722,21 +755,60 @@ function bbox(clip) {
   return boxCache.get(clip);
 }
 
-function drawSkeleton(canvas, clip, t, { fit, flip, bone }) {
+// Puntos 2D suavizados (promedio de ±30 ms) para que el esqueleto no tiemble al dibujarlo.
+// Solo afecta el dibujo: las métricas se calculan aparte.
+const smoothCache = new WeakMap();
+function smoothFrames(clip) {
+  if (!smoothCache.has(clip)) {
+    const fr = clip.frames;
+    smoothCache.set(clip, fr.map((f, i) => {
+      if (!f.p) return f;
+      const win = [];
+      for (let k = i; k >= 0 && f.t - fr[k].t <= 0.03; k--) if (fr[k].p) win.push(fr[k].p);
+      for (let k = i + 1; k < fr.length && fr[k].t - f.t <= 0.03; k++) if (fr[k].p) win.push(fr[k].p);
+      return { ...f, p: f.p.map((_, j) => win.reduce((sum, q) => sum + q[j], 0) / win.length) };
+    }));
+  }
+  return smoothCache.get(clip);
+}
+
+// Largo del torso en píxeles (mediana del clip), para dibujar a dos personas del mismo tamaño.
+const torsoCache = new WeakMap();
+function torsoPx(clip) {
+  if (!torsoCache.has(clip)) {
+    const px = (f, i) => ({ x: point2D(f, i).x * clip.w, y: point2D(f, i).y * clip.h });
+    const ls = clip.frames.filter((f) => f.p).map((f) => {
+      const sh = midPt(px(f, 11), px(f, 12));
+      const hp = midPt(px(f, 23), px(f, 24));
+      return Math.hypot(sh.x - hp.x, sh.y - hp.y);
+    }).sort((x, y) => x - y);
+    torsoCache.set(clip, ls[Math.floor(ls.length / 2)] || 1);
+  }
+  return torsoCache.get(clip);
+}
+
+const midPt = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+
+// mode: "video" (encima de tu video), "fit" (centrado en su cuadro) u "overlay" (cadera al centro,
+// tamaño por el torso, para poner un esqueleto encima del otro).
+function drawSkeleton(canvas, clip, t, { mode, flip, bone }) {
   const ctx = canvas.getContext("2d");
   const W = canvas.width;
   const H = canvas.height;
-  ctx.clearRect(0, 0, W, H);
   if (!clip) return;
-  const f = frameAt(clip.frames, t);
+  const f = frameAt(smoothFrames(clip), t);
   if (!f?.p) return;
   let map;
-  if (fit) {
+  if (mode === "fit") {
     const b = bbox(clip);
     const s = Math.min((W * 0.86) / (b.x1 - b.x0 || 1), (H * 0.86) / (b.y1 - b.y0 || 1));
     const ox = (W - (b.x1 - b.x0) * s) / 2;
     const oy = (H - (b.y1 - b.y0) * s) / 2;
     map = (p) => ({ x: ox + (p.x * clip.w - b.x0) * s, y: oy + (p.y * clip.h - b.y0) * s });
+  } else if (mode === "overlay") {
+    const hip = midPt(point2D(f, 23), point2D(f, 24));
+    const s = Math.min(H * 0.22, W * 0.3) / torsoPx(clip);
+    map = (p) => ({ x: W / 2 + (p.x - hip.x) * clip.w * s, y: H * 0.47 + (p.y - hip.y) * clip.h * s });
   } else {
     map = (p) => ({ x: p.x * W, y: p.y * H });
   }
@@ -747,15 +819,30 @@ function drawSkeleton(canvas, clip, t, { fit, flip, bone }) {
   const dpr = window.devicePixelRatio || 1;
   const arm = clip.hand === "L" ? [11, 13, 15] : [12, 14, 16];
   ctx.lineCap = "round";
+  ctx.strokeStyle = bone;
   for (const [a, b] of BONES) {
     const thick = arm.includes(a) && arm.includes(b);
-    ctx.strokeStyle = bone;
     ctx.lineWidth = (thick ? 4 : 2.5) * dpr;
     const p = pt(a);
     const q = pt(b);
     ctx.beginPath();
     ctx.moveTo(p.x, p.y);
     ctx.lineTo(q.x, q.y);
+    ctx.stroke();
+  }
+  // Cabeza (círculo en la nariz) y cuello, para que se lea como una persona.
+  const nose = pt(0);
+  const neck = midPt(pt(11), pt(12));
+  const r = Math.max(4 * dpr, Math.hypot(nose.x - neck.x, nose.y - neck.y) * 0.45);
+  const toNeck = Math.hypot(neck.x - nose.x, neck.y - nose.y) || 1;
+  ctx.lineWidth = 2.5 * dpr;
+  ctx.beginPath();
+  ctx.arc(nose.x, nose.y, r, 0, Math.PI * 2);
+  ctx.stroke();
+  if (toNeck > r) {
+    ctx.beginPath();
+    ctx.moveTo(nose.x + ((neck.x - nose.x) / toNeck) * r, nose.y + ((neck.y - nose.y) / toNeck) * r);
+    ctx.lineTo(neck.x, neck.y);
     ctx.stroke();
   }
   const wr = pt(arm[2]);
@@ -765,11 +852,22 @@ function drawSkeleton(canvas, clip, t, { fit, flip, bone }) {
   ctx.fill();
 }
 
+const BONE_ME = "#8cc7a0";
+const BONE_PRO = "#cfc8b4";
+
 function draw() {
   if (!current || !el.isConnected) return;
   const pro = pros.find((c) => c.id === proId);
-  drawSkeleton($('[data-canvas="me"]'), current.clip, tau, { fit: !current.video, flip: false, bone: "#8cc7a0" });
-  drawSkeleton($('[data-canvas="pro"]'), pro, tau, { fit: true, flip: mirror, bone: "#cfc8b4" });
+  const meCanvas = $('[data-canvas="me"]');
+  const proCanvas = $('[data-canvas="pro"]');
+  for (const c of [meCanvas, proCanvas]) c.getContext("2d").clearRect(0, 0, c.width, c.height);
+  drawSkeleton(meCanvas, current.clip, tau, { mode: current.video ? "video" : "fit", flip: false, bone: BONE_ME });
+  if (overlay && pro) {
+    drawSkeleton(proCanvas, pro, tau, { mode: "overlay", flip: mirror, bone: BONE_PRO });
+    drawSkeleton(proCanvas, current.clip, tau, { mode: "overlay", flip: false, bone: BONE_ME });
+  } else {
+    drawSkeleton(proCanvas, pro, tau, { mode: "fit", flip: mirror, bone: BONE_PRO });
+  }
   $("[data-seek]").value = tau;
   const ms = Math.round(tau * 1000);
   $("[data-tau]").textContent = ms === 0 ? "Suelta · 0 ms" : `${ms > 0 ? "+" : "−"}${Math.abs(ms)} ms`;

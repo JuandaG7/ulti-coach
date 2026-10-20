@@ -4,7 +4,7 @@
 // - Al publicar cambios hay que subir CACHE: el iPhone descarga la versión nueva por detrás
 //   y la usa en la siguiente apertura (la página se recarga sola una vez).
 // - Librerías y modelo de pose (CDN): caché aparte que sobrevive entre versiones, porque pesan.
-const CACHE = "ulti-coach-v19";
+const CACHE = "ulti-coach-v20";
 const CDN_CACHE = "ulti-coach-cdn";
 const SHELL = [
   "./", "./index.html", "./style.css", "./app.js", "./store.js", "./scoring.js", "./ui.js",
