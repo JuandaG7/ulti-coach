@@ -9,6 +9,7 @@ import { ring, bar, icon, fmt, today, tierClass, levelChip } from "../ui.js";
 import { openTestSheet } from "./test-sheet.js";
 import { drillChips, bindDrills } from "./exercise-sheet.js";
 import { openShareSheet } from "./share.js";
+import { openSendSheet } from "./send.js";
 import { openCheckinSheet } from "./checkin.js";
 import { backupNow, needsBackup } from "./backup.js";
 
@@ -39,7 +40,7 @@ export function render(root) {
 
   root.querySelectorAll('[data-act="demo"]').forEach((b) => b.addEventListener("click", () => store.loadDemo(buildDemo())));
   root.querySelectorAll('[data-act="clear-demo"]').forEach((b) => b.addEventListener("click", () => store.clearDemo()));
-  root.querySelector('[data-act="share"]')?.addEventListener("click", openShareSheet);
+  root.querySelector('[data-act="share"]')?.addEventListener("click", () => (p?.hasCoach ? openSendSheet() : openShareSheet()));
   root.querySelector('[data-act="backup"]')?.addEventListener("click", async () => {
     await backupNow();
     render(root);
@@ -59,7 +60,7 @@ function scoreCard(overall, p) {
         <h1 class="display">${level(overall).name}</h1>
         <p class="muted small">${next ? `${next.min - overall} pts para ${next.name}` : "Nivel máximo"}</p>
       </div>
-      <button class="icon-btn" data-act="share" aria-label="Compartir con mi entrenador">${icon("upload")}</button>
+      <button class="icon-btn" data-act="share" aria-label="${p?.hasCoach ? "Enviar a mi entrenador" : "Compartir mis resultados"}">${icon(p?.hasCoach ? "send" : "upload")}</button>
     </section>`;
 }
 

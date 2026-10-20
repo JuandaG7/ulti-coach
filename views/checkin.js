@@ -4,6 +4,7 @@ import { JOINTS } from "../data/joints.js";
 import * as store from "../store.js";
 import { wellness, weeklyLoad, checkinInsights } from "../scoring.js";
 import { openSheet, closeSheet } from "./sheet.js";
+import { openSendSheet } from "./send.js";
 import { icon, today, sparkline, toast, parseNum } from "../ui.js";
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -145,6 +146,11 @@ export function openCheckinSheet() {
         pains,
         note: d.get("note").trim(),
       });
+      // Con entrenador: al terminar el check-in se ofrece enviarle la semana (el jugador decide).
+      if (store.profile()?.hasCoach) {
+        openSendSheet({ afterCheckin: true });
+        return;
+      }
       closeSheet();
       toast(`<div class="toast-head"><span>${icon("check")} Check-in guardado</span><span class="num">${wellness(store.checkinFor(week))}/100</span></div>`, 3500);
     });

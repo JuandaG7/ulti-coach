@@ -26,9 +26,9 @@ function load() {
   try {
     const raw = localStorage.getItem(KEY);
     const data = raw ? JSON.parse(raw) : { version: VERSION };
-    return migrate({ version: data.version, entries: data.entries ?? [], profile: data.profile ?? null, checkins: data.checkins ?? [], lastBackup: data.lastBackup ?? null });
+    return migrate({ version: data.version, entries: data.entries ?? [], profile: data.profile ?? null, checkins: data.checkins ?? [], lastBackup: data.lastBackup ?? null, lastSent: data.lastSent ?? null, team: data.team ?? {} });
   } catch {
-    return { version: VERSION, entries: [], profile: null, checkins: [], lastBackup: null };
+    return { version: VERSION, entries: [], profile: null, checkins: [], lastBackup: null, lastSent: null, team: {} };
   }
 }
 
@@ -45,7 +45,9 @@ try {
 // Caché de listas ordenadas por prueba: se arma una vez y se borra al guardar algo.
 const sortedCache = new Map();
 
-function save() {
+// silent: guarda sin avisar a las pantallas (para datos internos que no cambian lo que se ve,
+// como la fecha del último envío; redibujar borraría, por ejemplo, el QR que se está mostrando).
+function save({ silent = false } = {}) {
   sortedCache.clear();
   try {
     localStorage.setItem(KEY, JSON.stringify(state));
@@ -54,7 +56,7 @@ function save() {
     // Sin almacenamiento: la app sigue funcionando en memoria y avisa que no se guardará.
     storageOk = false;
   }
-  listeners.forEach((fn) => fn());
+  if (!silent) listeners.forEach((fn) => fn());
 }
 
 export function onChange(fn) {
@@ -65,6 +67,60 @@ export function onChange(fn) {
 
 export function profile() {
   return state.profile;
+}
+
+// Rol: "jugador" (por defecto, también para perfiles viejos), "entrenador" o "ambos".
+export function plays() {
+  return (state.profile?.role ?? "jugador") !== "entrenador";
+}
+
+export function coaches() {
+  return ["entrenador", "ambos"].includes(state.profile?.role);
+}
+
+// Identificador único del jugador (para que el entrenador no mezcle a dos con el mismo nombre).
+export function playerId() {
+  if (!state.profile.playerId) {
+    state.profile = { ...state.profile, playerId: crypto.randomUUID() };
+    save({ silent: true });
+  }
+  return state.profile.playerId;
+}
+
+// ---------- Envío al entrenador (jugador) ----------
+
+export function lastSent() {
+  return state.lastSent;
+}
+
+export function markSent() {
+  state.lastSent = new Date().toISOString();
+  save({ silent: true });
+}
+
+// ---------- Equipo (entrenador) ----------
+// team: { [playerId]: { name, snaps: [paquetes, del más viejo al más nuevo] } }
+
+export function teamPlayers() {
+  return Object.entries(state.team).map(([id, p]) => ({ id, name: p.name, snaps: p.snaps }));
+}
+
+// Guarda un paquete recibido. Devuelve "nuevo", "actualizado" o "repetido".
+export function importSnapshot(snap) {
+  const p = state.team[snap.id] ?? { name: snap.n, snaps: [] };
+  if (p.snaps.some((s) => s.at === snap.at)) return "repetido";
+  const isNew = !state.team[snap.id];
+  p.name = snap.n;
+  p.snaps = [...p.snaps, snap].sort((a, b) => a.at.localeCompare(b.at)).slice(-30);
+  state.team = { ...state.team, [snap.id]: p };
+  save();
+  return isNew ? "nuevo" : "actualizado";
+}
+
+export function removePlayer(id) {
+  const { [id]: _, ...rest } = state.team;
+  state.team = rest;
+  save();
 }
 
 export function saveProfile(p) {
@@ -186,7 +242,7 @@ export function markBackup() {
 }
 
 export function ownEntriesCount() {
-  return state.entries.filter((e) => !e.demo).length + state.checkins.length;
+  return state.entries.filter((e) => !e.demo).length + state.checkins.length + Object.keys(state.team).length;
 }
 
 export function exportJSON() {
@@ -196,6 +252,6 @@ export function exportJSON() {
 export function importJSON(text) {
   const data = JSON.parse(text);
   if (!Array.isArray(data.entries)) throw new Error("Archivo inválido");
-  state = migrate({ version: data.version, entries: data.entries, profile: data.profile ?? state.profile, checkins: data.checkins ?? state.checkins });
+  state = migrate({ ...state, version: data.version, entries: data.entries, profile: data.profile ?? state.profile, checkins: data.checkins ?? state.checkins, team: data.team ?? state.team });
   save();
 }

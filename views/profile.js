@@ -5,6 +5,12 @@ import { buildDemo } from "../data/demo.js";
 import { backupNow } from "./backup.js";
 import { icon, today, fmtDate, sparkline, toast, parseNum } from "../ui.js";
 
+const ROLES = {
+  jugador: { name: "Jugador", help: "Mides tu rendimiento, sigues tu plan y, si quieres, lo compartes con tu entrenador." },
+  entrenador: { name: "Entrenador", help: "Recibes el progreso de tus jugadores y ves al equipo completo." },
+  ambos: { name: "Ambos", help: "Juegas y además entrenas a otros: tienes las dos vistas." },
+};
+
 const POSITION_HELP = {
   handler: "Lanzas y mueves el disco. Pesa más lanzamiento y cambio de dirección.",
   cutter: "Cortas y atacas el espacio. Pesa más velocidad y resistencia.",
@@ -15,13 +21,14 @@ export function render(root, param) {
   const welcome = param === "bienvenida" || !store.profile();
   const p = store.profile() ?? {};
   const kg = store.currentWeight();
+  const role = p.role ?? "jugador";
 
   root.innerHTML = `
     <header class="page-head">
       ${welcome ? `<p class="eyebrow">Bienvenido a Ulti Coach</p>` : ""}
       <h1 class="display">${welcome ? "Arma tu perfil" : "Tu perfil"}</h1>
       <p class="muted">${welcome
-        ? "Con esto ajustamos tus metas (según edad y sexo), tus prioridades (según posición) y los ejercicios (gym o casa). Lo puedes cambiar cuando quieras."
+        ? "Primero dinos cómo vas a usar la app. Si juegas, con tus datos ajustamos metas, prioridades y ejercicios. Lo puedes cambiar cuando quieras."
         : "Tus metas y prioridades se recalculan cuando cambias algo aquí."}</p>
       ${!welcome && ageFactor() !== 1 ? `<p class="hint-chip">${icon("target")} Metas ajustadas a tus ${p.age} años (estimación)</p>` : ""}
     </header>
@@ -31,6 +38,33 @@ export function render(root, param) {
         <span>Nombre</span>
         <input name="name" type="text" maxlength="30" autocomplete="given-name" value="${escapeAttr(p.name ?? "")}" placeholder="Juan" required>
         <small class="error" hidden>Escribe tu nombre</small>
+      </label>
+
+      <fieldset class="field">
+        <legend>¿Cómo vas a usar la app?</legend>
+        <div class="choice-grid">
+          ${Object.entries(ROLES).map(([id, r]) => `
+            <label class="choice">
+              <input type="radio" name="role" value="${id}" ${role === id ? "checked" : ""}>
+              <span class="choice-title">${r.name}</span>
+              <span class="choice-help">${r.help}</span>
+            </label>`).join("")}
+        </div>
+      </fieldset>
+
+      <div class="athlete-fields form" ${role === "entrenador" ? "hidden" : ""}>
+      <fieldset class="field">
+        <legend>¿Tienes entrenador?</legend>
+        <div class="segmented wide">
+          ${radio("hasCoach", "si", "Sí", p.hasCoach ? "si" : p.hasCoach === false ? "no" : "")}
+          ${radio("hasCoach", "no", "No", p.hasCoach === false ? "no" : "")}
+        </div>
+        <small class="muted">Si tienes, podrás enviarle tu progreso cada semana.</small>
+        <small class="error" hidden>Elige una opción</small>
+      </fieldset>
+      <label class="field coach-name" ${p.hasCoach ? "" : "hidden"}>
+        <span>Nombre de tu entrenador <span class="muted small">(opcional)</span></span>
+        <input name="coachName" type="text" maxlength="30" value="${escapeAttr(p.coachName ?? "")}" placeholder="Profe Carlos">
       </label>
 
       <fieldset class="field">
@@ -95,11 +129,12 @@ export function render(root, param) {
           </label>
         </div>
       </fieldset>
+      </div>
 
       <button type="submit" class="btn primary block">${welcome ? `Empezar ${icon("arrow")}` : `${icon("check")} Guardar cambios`}</button>
     </form>
 
-    ${welcome ? "" : weightSection()}
+    ${welcome || role === "entrenador" ? "" : weightSection()}
     ${welcome ? "" : dataSection()}
   `;
   if (!welcome) bindData(root);
@@ -109,15 +144,26 @@ export function render(root, param) {
     const err = e.target.closest(".field")?.querySelector(".error");
     if (err) err.hidden = true;
   });
+  form.addEventListener("change", () => {
+    const d = new FormData(form);
+    form.querySelector(".athlete-fields").hidden = d.get("role") === "entrenador";
+    form.querySelector(".coach-name").hidden = d.get("hasCoach") !== "si";
+  });
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     const data = new FormData(form);
+    const plays = data.get("role") !== "entrenador";
     const checks = [
       ["name", (v) => v.trim().length > 0],
-      ["sex", (v) => v === "m" || v === "f"],
-      ["age", (v) => v >= 10 && v <= 90],
-      ["heightCm", (v) => v >= 120 && v <= 230],
-      ["kg", (v) => v >= 30 && v <= 200],
+      ...(plays
+        ? [
+            ["hasCoach", (v) => v === "si" || v === "no"],
+            ["sex", (v) => v === "m" || v === "f"],
+            ["age", (v) => v >= 10 && v <= 90],
+            ["heightCm", (v) => v >= 120 && v <= 230],
+            ["kg", (v) => v >= 30 && v <= 200],
+          ]
+        : []),
     ];
     let firstBad = null;
     for (const [name, ok] of checks) {
@@ -132,18 +178,25 @@ export function render(root, param) {
       firstBad.querySelector("input")?.focus();
       return;
     }
-    const newKg = parseNum(data.get("kg"));
-    store.saveProfile({
-      name: data.get("name").trim(),
-      sex: data.get("sex"),
-      age: Number(data.get("age")),
-      heightCm: Number(data.get("heightCm")),
-      hand: data.get("hand"),
-      position: data.get("position"),
-      mode: data.get("mode"),
-    });
-    if (newKg !== store.currentWeight()) store.addWeight(newKg, today());
-    if (welcome) location.hash = "#inicio";
+    const base = { name: data.get("name").trim(), role: data.get("role"), playerId: p.playerId ?? crypto.randomUUID() };
+    if (!plays) {
+      store.saveProfile(base);
+    } else {
+      const newKg = parseNum(data.get("kg"));
+      store.saveProfile({
+        ...base,
+        hasCoach: data.get("hasCoach") === "si",
+        coachName: data.get("coachName").trim(),
+        sex: data.get("sex"),
+        age: Number(data.get("age")),
+        heightCm: Number(data.get("heightCm")),
+        hand: data.get("hand"),
+        position: data.get("position"),
+        mode: data.get("mode"),
+      });
+      if (newKg !== store.currentWeight()) store.addWeight(newKg, today());
+    }
+    if (welcome) location.hash = plays ? "#inicio" : "#equipo";
     else toast(`<div class="toast-head"><span>${icon("check")} Perfil guardado. Metas y prioridades recalculadas.</span></div>`, 3500);
   });
 

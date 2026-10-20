@@ -1,7 +1,7 @@
 // Pruebas: responde "¿qué mido hoy?". Arriba las 3 sugeridas; abajo tu perfil atlético por
 // categoría, cada una plegable con sus pruebas adentro (se abre de a una).
 import { CATEGORIES, TESTS } from "../data/tests.js";
-import { entries } from "../store.js";
+import { entries, coaches, plays } from "../store.js";
 import { categoryScore, testScore, suggestedTests } from "../scoring.js";
 import { sparkline, fmt, fmtDate, icon, tierClass, levelChip, bar, summary, lessButton, exclusive } from "../ui.js";
 import { openTestSheet } from "./test-sheet.js";
@@ -14,6 +14,7 @@ export function render(root, openCat) {
     <header class="page-head">
       <h1 class="display">Pruebas</h1>
       <p class="muted small">Mídete cada 3–4 semanas, con calentamiento y en condiciones parecidas.</p>
+      ${coaches() && plays() ? `<a class="link small" href="#video">${icon("video")} Análisis de video</a>` : ""}
     </header>
 
     ${suggested.length ? `
