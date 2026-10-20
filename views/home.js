@@ -4,7 +4,7 @@ import { TESTS, TESTS_BY_ID } from "../data/tests.js";
 import { buildDemo } from "../data/demo.js";
 import { weekKey } from "../data/checkin.js";
 import * as store from "../store.js";
-import { overallScore, level, nextLevel, priorities, POSITIONS, jointPriorities, wellness, nextStep, checkinInsights } from "../scoring.js";
+import { overallScore, level, nextLevel, priorities, POSITIONS, jointPriorities, wellness, nextStep, checkinInsights, testsMeasured, STARTER_TESTS, starterPending } from "../scoring.js";
 import { ring, bar, icon, fmt, today, tierClass, levelChip } from "../ui.js";
 import { openTestSheet } from "./test-sheet.js";
 import { drillChips, bindDrills } from "./exercise-sheet.js";
@@ -51,6 +51,7 @@ export function render(root) {
 
 function scoreCard(overall, p) {
   const next = nextLevel(overall);
+  const measured = testsMeasured();
   return `
     <section class="card score-card ${tierClass(overall)}">
       ${ring(overall, { size: 92, stroke: 9 })}
@@ -58,6 +59,7 @@ function scoreCard(overall, p) {
         <p class="eyebrow">Ulti Score${p?.position ? ` · ${POSITIONS[p.position]}` : ""}</p>
         <h1 class="display">${level(overall).name}</h1>
         <p class="muted small">${next ? `${next.min - overall} pts para ${next.name}` : "Nivel máximo"}</p>
+        ${measured < 6 ? `<p class="muted small">Estimado con ${measured} prueba${measured > 1 ? "s" : ""}: se afina al medir más.</p>` : ""}
       </div>
       <button class="icon-btn" data-act="share" aria-label="Compartir con mi entrenador">${icon("upload")}</button>
     </section>`;
@@ -70,7 +72,7 @@ function emptyScoreCard(p) {
       <div class="score-text">
         <p class="eyebrow">Ulti Score</p>
         <h1 class="display">${p?.name ? `Vamos, ${p.name}` : "Empieza"}</h1>
-        <p class="muted small">Se llena con tus pruebas. <button class="link" data-act="demo">Ver un ejemplo</button></p>
+        <p class="muted small">Se llena con 3 pruebas rápidas. <button class="link" data-act="demo">Ver un ejemplo</button></p>
       </div>
     </section>`;
 }
@@ -85,13 +87,39 @@ function stepCard(checkin) {
     rest: `<a class="btn primary block" href="#blindaje">${icon("shield")} Ver ejercicios de blindaje</a>`,
     test: `<button class="btn primary block" data-test="${step.testId}">${icon("timer")} Medir ahora</button>`,
     train: `<a class="btn primary block" href="#cuerpo/${step.muscleId}">${icon("body")} Ver ejercicios</a>`,
+    starter: `<button class="btn primary block" data-test="${step.testId}">${icon("timer")} Medir ahora</button>`,
   }[step.kind];
+  if (step.kind === "starter") return starterCard(step, action);
   return `
     <section class="card step-card">
       <p class="eyebrow">Tu siguiente paso</p>
       <h2 class="step-title">${step.title}</h2>
       <p class="muted small">${step.text}</p>
       ${alert ? `<p class="step-alert">${icon("alert")}<span>${alert.text}</span></p>` : ""}
+      ${action}
+    </section>`;
+}
+
+// Arranque: las 3 pruebas con su estado, la siguiente marcada.
+function starterCard(step, action) {
+  const done = STARTER_TESTS.filter((id) => store.latest(id)).length;
+  const row = (id) => {
+    const t = TESTS_BY_ID[id];
+    const state = store.latest(id) ? "done" : step.pending.includes(id) ? (id === step.testId ? "next" : "todo") : "paused";
+    const note = { done: "Hecha", next: "Siguiente", todo: "Pendiente", paused: "Pausada por lesión" }[state];
+    return `
+      <button class="starter-row ${state}" data-test="${id}" ${state === "paused" ? "disabled" : ""}>
+        <span class="starter-mark">${state === "done" ? icon("check") : ""}</span>
+        <span class="starter-name">${t.name}</span>
+        <span class="muted small">${note}</span>
+      </button>`;
+  };
+  return `
+    <section class="card step-card">
+      <p class="eyebrow">Tu arranque · ${done} de ${STARTER_TESTS.length}</p>
+      <h2 class="step-title">${step.title}</h2>
+      <p class="muted small">${step.text}</p>
+      <div class="starter-list">${STARTER_TESTS.map(row).join("")}</div>
       ${action}
     </section>`;
 }
@@ -128,6 +156,7 @@ function tiles(checkin) {
   const alerts = new Set(joints.flatMap((j) => j.alerts.map((a) => a.testId))).size;
   const lastEntry = store.entries().pop();
   const lastTest = lastEntry ? TESTS_BY_ID[lastEntry.testId] : null;
+  const pending = starterPending();
   return `
     <section class="tiles">
       <a class="card tile" href="#blindaje">
@@ -145,6 +174,12 @@ function tiles(checkin) {
             <span class="eyebrow">Última</span>
             <span class="tile-value num">${fmt(lastEntry.value, lastTest.decimals)}<small>${lastTest.unit}</small></span>
             <span class="muted small">${lastTest.name}</span>
+          </button>`
+        : pending.length
+        ? `<button class="card tile" data-test="${pending[0]}">
+            <span class="eyebrow">Arranque</span>
+            <span class="tile-value num">${pending.length}</span>
+            <span class="muted small">pruebas · 10 min</span>
           </button>`
         : `<a class="card tile" href="#pruebas">
             <span class="eyebrow">Pruebas</span>

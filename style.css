@@ -573,6 +573,16 @@ details:not([open]) .when-open, details[open] .when-closed { display: none; }
 .step-card .btn { margin-top: 8px; }
 .step-alert { display: flex; gap: 8px; align-items: flex-start; padding: 10px 12px; border-radius: 16px; background: rgba(240, 138, 126, 0.12); color: #f8c7c0; font-size: 0.86rem; }
 .step-alert .icon { width: 16px; height: 16px; color: var(--bad); flex: none; margin-top: 2px; }
+.starter-list { display: flex; flex-direction: column; margin-top: 4px; }
+.starter-row { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 6px 0; text-align: left; color: inherit; }
+.starter-row + .starter-row { border-top: 1px solid var(--border); }
+.starter-mark { flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 99px; border: 1.5px solid var(--border); }
+.starter-mark .icon { width: 14px; height: 14px; }
+.starter-name { flex: 1; min-width: 0; font-weight: 500; }
+.starter-row.next .starter-mark { border-color: var(--accent); }
+.starter-row.next .starter-name { color: var(--accent); }
+.starter-row.done .starter-mark { border-color: var(--accent); background: var(--accent); color: var(--bg); }
+.starter-row.done .starter-name, .starter-row.paused { color: var(--muted); }
 .focus-card { display: flex; flex-direction: column; gap: 12px; }
 .focus-line { display: flex; align-items: center; gap: 12px; color: inherit; }
 .focus-rest { display: grid; gap: 12px; padding-top: 10px; }

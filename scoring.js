@@ -281,10 +281,14 @@ const daysSince = (iso) => Math.floor((Date.now() - new Date(iso + "T12:00:00").
 
 // Pruebas para medir ahora: primero las importantes que nunca mediste, luego las que hace más
 // de 3 semanas no repites. Se saltan las que cargan una zona con lesión activa.
-export function suggestedTests(n = 3) {
+function blockedByInjury() {
   const injured = new Set(injuries().filter((i) => i.status === "activa").map((i) => i.zone));
-  const blocked = (testId) =>
+  return (testId) =>
     Object.entries(JOINTS).some(([z, j]) => injured.has(z) && (testId in j.rango || testId in j.fuerza || j.simetria.includes(testId)));
+}
+
+export function suggestedTests(n = 3) {
+  const blocked = blockedByInjury();
   const candidates = TESTS.filter((t) => !blocked(t.id)).map((t) => {
     const last = latest(t.id);
     const age = last ? daysSince(last.date) : null;
@@ -294,8 +298,24 @@ export function suggestedTests(n = 3) {
   return candidates.filter((c) => c.rank >= 0).sort((a, b) => b.rank - a.rank).slice(0, n);
 }
 
+// Arranque: 3 pruebas que se hacen solo, en casa y sin equipo (~10 min). Con ellas ya hay
+// un primer Ulti Score y un foco, sin tener que medir las 37 el primer día.
+export const STARTER_TESTS = ["broadJump", "gluteBridge", "kneeToWall"];
+
+// Las del arranque que faltan (se saltan las que cargan una zona con lesión activa).
+export function starterPending() {
+  const blocked = blockedByInjury();
+  return STARTER_TESTS.filter((id) => !blocked(id) && !latest(id));
+}
+
 // La única acción que la app recomienda para hoy.
 export function nextStep({ checkinDone, wellnessNow }) {
+  // Mientras falte el arranque, primero eso: el check-in no le dice nada a alguien recién llegado.
+  const pending = starterPending();
+  if (pending.length) {
+    const t = TESTS_BY_ID[pending[0]];
+    return { kind: "starter", testId: t.id, pending, title: `Mide: ${t.name}`, text: "3 pruebas, solo y sin equipo (~10 min). Con ellas ves tu Ulti Score y tu foco." };
+  }
   if (!checkinDone) {
     return { kind: "checkin", title: "Haz tu check-in de la semana", text: "1 minuto. Sin él no sabemos si estás fresco o cansado." };
   }
