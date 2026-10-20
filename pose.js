@@ -13,11 +13,17 @@ export { DrawingUtils, PoseLandmarker };
 
 export async function createPoseLandmarker() {
   const vision = await FilesetResolver.forVisionTasks(WASM_URL);
-  return PoseLandmarker.createFromOptions(vision, {
-    baseOptions: { modelAssetPath: MODEL_URL, delegate: "GPU" },
+  const options = (delegate) => ({
+    baseOptions: { modelAssetPath: MODEL_URL, delegate },
     runningMode: "VIDEO",
     numPoses: 1,
   });
+  // GPU es más rápido; si el celular no lo permite, el procesador (CPU) funciona igual, solo más lento.
+  try {
+    return await PoseLandmarker.createFromOptions(vision, options("GPU"));
+  } catch {
+    return PoseLandmarker.createFromOptions(vision, options("CPU"));
+  }
 }
 
 // MediaPipe exige timestamps siempre crecientes, incluso entre videos distintos.

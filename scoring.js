@@ -312,3 +312,13 @@ export function nextStep({ checkinDone, wellnessNow }) {
   const top = priorities()[0];
   return { kind: "train", muscleId: top.id, title: `Entrena tu foco: ${top.muscle.name}`, text: "Estás al día con las pruebas. Hoy toca subir tu punto más débil." };
 }
+
+// Rango razonable para una prueba: fuera de esto probablemente es un error de dedo.
+// Más es mejor: de 0 a la meta élite + 150 % del recorrido. Tiempos: no más rápido que
+// élite menos un recorrido completo, ni más lento que base + 3 recorridos.
+export function plausibleRange(testId) {
+  const { base, elite } = TESTS_BY_ID[testId].targets.m;
+  const span = Math.abs(elite - base);
+  if (elite < base) return { min: Math.max(0, elite - span), max: base + span * 3 };
+  return { min: 0, max: elite + span * 1.5 };
+}

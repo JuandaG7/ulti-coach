@@ -10,6 +10,7 @@ import { openTestSheet } from "./test-sheet.js";
 import { drillChips, bindDrills } from "./exercise-sheet.js";
 import { openShareSheet } from "./share.js";
 import { openCheckinSheet } from "./checkin.js";
+import { backupNow, needsBackup } from "./backup.js";
 
 export function render(root) {
   const p = store.profile();
@@ -20,7 +21,12 @@ export function render(root) {
   const mode = p?.mode ?? "casa";
 
   root.innerHTML = `
+    ${!store.storageOk ? `<div class="banner warn">${icon("alert")}<span>Este navegador no deja guardar datos (¿modo privado?). Lo que registres se perderá al cerrar. Abre la app en una pestaña normal.</span></div>` : ""}
     ${store.hasDemo() ? `<div class="banner">Estás viendo datos de ejemplo. <button class="link" data-act="clear-demo">Quitarlos</button></div>` : ""}
+    ${needsBackup() ? `
+      <div class="banner backup">${icon("download")}<span>Tus datos viven solo en este celular. ${store.lastBackup() ? "Hace más de un mes que no haces un respaldo." : "Todavía no has hecho ningún respaldo."}</span>
+        <button class="btn secondary small-btn" data-act="backup">Respaldar</button>
+      </div>` : ""}
 
     ${hasData ? scoreCard(overall, p) : emptyScoreCard(p)}
 
@@ -34,6 +40,10 @@ export function render(root) {
   root.querySelectorAll('[data-act="demo"]').forEach((b) => b.addEventListener("click", () => store.loadDemo(buildDemo())));
   root.querySelectorAll('[data-act="clear-demo"]').forEach((b) => b.addEventListener("click", () => store.clearDemo()));
   root.querySelector('[data-act="share"]')?.addEventListener("click", openShareSheet);
+  root.querySelector('[data-act="backup"]')?.addEventListener("click", async () => {
+    await backupNow();
+    render(root);
+  });
   root.querySelectorAll('[data-act="checkin"]').forEach((b) => b.addEventListener("click", openCheckinSheet));
   root.querySelectorAll("[data-test]").forEach((b) => b.addEventListener("click", () => openTestSheet(b.dataset.test)));
   bindDrills(root);

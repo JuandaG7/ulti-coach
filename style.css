@@ -76,7 +76,7 @@ h1, h2, h3, p { margin: 0; }
 .small { font-size: 0.875rem; }
 .accent { color: var(--accent); }
 .eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
-.display { font-family: var(--font-display); font-weight: 700; font-size: 2.4rem; line-height: 1.02; letter-spacing: 0.005em; }
+.display { font-family: var(--font-display); font-weight: 700; font-size: 2.4rem; line-height: 1.02; letter-spacing: 0.005em; overflow-wrap: anywhere; }
 .icon { width: 20px; height: 20px; flex: none; }
 
 /* Niveles: .tier-* define --tier (y la tinta para texto encima) */
@@ -228,7 +228,7 @@ section { display: flex; flex-direction: column; gap: 16px; }
 .focus-name { flex: 1; font-weight: 600; font-size: 1.1rem; }
 .focus p:not(.accent) { color: var(--text-2); }
 
-.chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .chips li { font-size: 0.82rem; padding: 6px 11px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-2); }
 
 .data-card { display: flex; flex-direction: column; gap: 12px; }
@@ -317,7 +317,7 @@ input:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color:
 .timer-tag .icon { width: 14px; height: 14px; color: var(--muted); vertical-align: -2px; }
 .badge { display: grid; place-items: center; min-width: 42px; height: 30px; padding: 0 8px; border-radius: 9px; font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; color: var(--tier-ink); background: var(--tier); }
 .badge.tier-t4 { box-shadow: 0 0 12px var(--t4-glow); }
-.add-pill { display: inline-flex; align-items: center; gap: 4px; padding: 7px 13px; border-radius: 99px; border: 1px dashed #2f4a3e; color: var(--accent); font-size: 0.88rem; font-weight: 600; }
+.add-pill { display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 7px 14px; border-radius: 99px; border: 1px dashed #2f4a3e; color: var(--accent); font-size: 0.88rem; font-weight: 600; }
 .add-pill .icon { width: 16px; height: 16px; }
 
 /* ---------- Hoja inferior ---------- */
@@ -403,6 +403,9 @@ input:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color:
 .timer-arrow { font-size: 6rem; line-height: 1; color: var(--t4); text-shadow: 0 0 24px var(--ivory-glow); font-weight: 700; }
 
 /* ---------- Blindaje ---------- */
+.banner.backup { display: flex; align-items: center; gap: 10px; }
+.banner.backup > .icon { color: var(--accent); flex: none; }
+.banner.backup .btn { flex: none; margin-left: auto; }
 .banner.warn { display: flex; gap: 10px; align-items: flex-start; background: rgba(251, 191, 36, 0.1); border-color: rgba(251, 191, 36, 0.4); }
 .banner.warn .icon { color: var(--warn); margin-top: 2px; }
 .joint-list { display: grid; gap: 20px; }
@@ -447,7 +450,7 @@ input:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color:
 .shield-title { font-size: 1.05rem; }
 
 /* ---------- Ejercicios, seguridad y compartir ---------- */
-.chips.drills .drill { display: inline-flex; align-items: center; gap: 2px; font-size: 0.82rem; padding: 6px 6px 6px 11px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-2); min-height: 32px; text-align: left; transition: background-color .15s, border-color .15s; }
+.chips.drills .drill { display: inline-flex; align-items: center; gap: 2px; font-size: 0.85rem; padding: 8px 8px 8px 13px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-2); min-height: 40px; text-align: left; transition: background-color .15s, border-color .15s; }
 .chips.drills li { padding: 0; border: 0; background: none; }
 .chips.drills .drill:active { background: var(--surface-3); }
 .chips.drills .drill:hover { border-color: var(--accent); }
@@ -666,3 +669,6 @@ progress { width: 100%; margin-top: 8px; accent-color: var(--accent); }
 .result-hero.tier-t4 { box-shadow: inset 4px 0 0 var(--gold), 0 10px 24px rgba(0, 0, 0, 0.45), 0 0 28px rgba(226, 194, 126, 0.14); }
 .result-hero.tier-t4 .result-score-num { color: var(--gold); }
 .tag.best { background: rgba(226, 194, 126, 0.16); color: var(--gold); }
+
+/* Nombres y títulos largos no deben romper filas */
+.focus-name, .cat-name, .row-main > span:first-child { overflow-wrap: anywhere; }

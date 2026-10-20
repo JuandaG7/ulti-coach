@@ -4,7 +4,7 @@
 // - Al publicar cambios hay que subir CACHE: el iPhone descarga la versión nueva por detrás
 //   y la usa en la siguiente apertura (la página se recarga sola una vez).
 // - Librerías y modelo de pose (CDN): caché aparte que sobrevive entre versiones, porque pesan.
-const CACHE = "ulti-coach-v16";
+const CACHE = "ulti-coach-v17";
 const CDN_CACHE = "ulti-coach-cdn";
 const SHELL = [
   "./", "./index.html", "./style.css", "./app.js", "./store.js", "./scoring.js", "./ui.js",
@@ -14,7 +14,7 @@ const SHELL = [
   "./data/checkin.js", "./data/body-map.js", "./data/demo.js",
   "./views/home.js", "./views/body.js", "./views/tests.js", "./views/video.js", "./views/sheet.js",
   "./views/test-sheet.js", "./views/profile.js", "./views/blindaje.js", "./views/exercise-sheet.js",
-  "./views/share.js", "./views/checkin.js", "./views/jump-video.js",
+  "./views/share.js", "./views/checkin.js", "./views/jump-video.js", "./views/backup.js",
 ];
 
 self.addEventListener("install", (e) => {

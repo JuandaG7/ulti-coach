@@ -2,7 +2,8 @@
 import * as store from "../store.js";
 import { POSITIONS, jumpPower, ageFactor } from "../scoring.js";
 import { buildDemo } from "../data/demo.js";
-import { icon, today, fmtDate, sparkline, toast } from "../ui.js";
+import { backupNow } from "./backup.js";
+import { icon, today, fmtDate, sparkline, toast, parseNum } from "../ui.js";
 
 const POSITION_HELP = {
   handler: "Lanzas y mueves el disco. Pesa más lanzamiento y cambio de dirección.",
@@ -28,7 +29,7 @@ export function render(root, param) {
     <form class="card form profile-form" novalidate>
       <label class="field">
         <span>Nombre</span>
-        <input name="name" type="text" autocomplete="given-name" value="${escapeAttr(p.name ?? "")}" placeholder="Juan" required>
+        <input name="name" type="text" maxlength="30" autocomplete="given-name" value="${escapeAttr(p.name ?? "")}" placeholder="Juan" required>
         <small class="error" hidden>Escribe tu nombre</small>
       </label>
 
@@ -54,7 +55,7 @@ export function render(root, param) {
         </label>
         <label class="field">
           <span>Peso (kg)</span>
-          <input name="kg" type="number" inputmode="decimal" step="0.1" min="30" max="200" value="${kg ?? ""}" placeholder="72" required>
+          <input name="kg" type="text" inputmode="decimal" autocomplete="off" value="${kg ?? ""}" placeholder="72" required>
           <small class="error" hidden>Entre 30 y 200</small>
         </label>
       </div>
@@ -121,7 +122,7 @@ export function render(root, param) {
     let firstBad = null;
     for (const [name, ok] of checks) {
       const raw = data.get(name) ?? "";
-      const val = ["age", "heightCm", "kg"].includes(name) ? Number(raw || NaN) : raw;
+      const val = ["age", "heightCm", "kg"].includes(name) ? parseNum(raw) : raw;
       const field = form.querySelector(`[name="${name}"]`).closest(".field");
       const valid = ok(val);
       field.querySelector(".error").hidden = valid;
@@ -131,7 +132,7 @@ export function render(root, param) {
       firstBad.querySelector("input")?.focus();
       return;
     }
-    const newKg = Number(data.get("kg"));
+    const newKg = parseNum(data.get("kg"));
     store.saveProfile({
       name: data.get("name").trim(),
       sex: data.get("sex"),
@@ -148,7 +149,7 @@ export function render(root, param) {
 
   root.querySelector(".weight-form")?.addEventListener("submit", (e) => {
     e.preventDefault();
-    const v = Number(new FormData(e.target).get("kg"));
+    const v = parseNum(new FormData(e.target).get("kg"));
     if (v >= 30 && v <= 200) store.addWeight(v, today());
   });
 }
@@ -170,7 +171,7 @@ function weightSection() {
         <form class="weight-form inline-form">
           <label class="field grow">
             <span>Registrar peso de hoy (kg)</span>
-            <input name="kg" type="number" inputmode="decimal" step="0.1" min="30" max="200" required>
+            <input name="kg" type="text" inputmode="decimal" autocomplete="off" required>
           </label>
           <button class="btn secondary" type="submit">${icon("plus")} Agregar</button>
         </form>
@@ -192,7 +193,8 @@ function dataSection() {
     <section>
       <h2 class="section-title">Tus datos</h2>
       <div class="card data-card">
-        <p class="muted small">Se guardan solo en este celular. Haz un respaldo para pasarlos a otro dispositivo o no perderlos.</p>
+        <p class="muted small">Se guardan solo en este celular. Haz un respaldo para pasarlos a otro dispositivo o no perderlos.
+          ${store.lastBackup() ? `Último respaldo: ${fmtDate(store.lastBackup(), { day: "numeric", month: "long" })}.` : "Todavía no has hecho ninguno."}</p>
         <div class="btn-row">
           <button class="btn secondary" data-act="export">${icon("download")} Respaldar</button>
           <label class="btn secondary">${icon("upload")} Restaurar<input type="file" accept="application/json" data-act="import" hidden></label>
@@ -210,14 +212,7 @@ function bindData(root) {
     location.hash = "#inicio";
   });
   root.querySelector('[data-act="clear-demo"]')?.addEventListener("click", () => store.clearDemo());
-  root.querySelector('[data-act="export"]').addEventListener("click", () => {
-    const blob = new Blob([store.exportJSON()], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `ulti-coach-respaldo-${today()}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  });
+  root.querySelector('[data-act="export"]').addEventListener("click", backupNow);
   root.querySelector('[data-act="import"]').addEventListener("change", async (e) => {
     const file = e.target.files[0];
     if (!file) return;

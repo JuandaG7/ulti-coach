@@ -3,12 +3,12 @@
 import { TESTS_BY_ID, CATEGORIES, entryValue } from "../data/tests.js";
 import { MUSCLES } from "../data/muscles.js";
 import * as store from "../store.js";
-import { testScore, target, isImprovement, level, snapshot, asymmetry, asymmetryFlag, isAgeAdjusted } from "../scoring.js";
+import { testScore, target, isImprovement, level, snapshot, asymmetry, asymmetryFlag, isAgeAdjusted, plausibleRange } from "../scoring.js";
 import { openSheet } from "./sheet.js";
 import { openJumpVideo } from "./jump-video.js";
 import { WARMUP, isMaxEffort, zonesForTest } from "../data/safety.js";
 import { JOINTS, SIDES, sidePhrase } from "../data/joints.js";
-import { icon, fmt, fmtDate, today, historyChart, levelChip, tierClass, toast, summary } from "../ui.js";
+import { icon, fmt, fmtDate, today, historyChart, levelChip, tierClass, toast, summary, parseNum } from "../ui.js";
 
 let editing = null; // id de la medición que se está editando
 let prefill = null; // valor que llega desde otra herramienta (p. ej. salto por video)
@@ -115,7 +115,7 @@ function render(root, testId) {
   root.querySelector(".edit-form")?.addEventListener("submit", (e) => {
     e.preventDefault();
     const parsed = readValues(e.target, test);
-    if (!parsed) return;
+    if (!parsed || !confirmPlausible(test, e.target)) return;
     const id = editing;
     editing = null;
     store.updateEntry(id, parsed.value, new FormData(e.target).get("date"), parsed.extra);
@@ -151,7 +151,7 @@ function valueInputs(test, entry) {
   const num = (name, label, value = "") => `
     <label class="field">
       <span>${label}</span>
-      <input name="${name}" type="number" inputmode="decimal" step="any" min="0" value="${value}" data-value required>
+      <input name="${name}" type="text" inputmode="decimal" autocomplete="off" value="${value}" data-value required>
     </label>`;
   if (test.kind === "bilateral") {
     return `<div class="value-grid two">${num("L", `Izquierda (${test.unit})`, entry?.sides?.L)}${num("R", `Derecha (${test.unit})`, entry?.sides?.R)}</div>`;
@@ -165,7 +165,7 @@ function valueInputs(test, entry) {
 // Lee los valores del formulario. Devuelve null si falta alguno.
 function readValues(form, test) {
   const inputs = [...form.querySelectorAll("[data-value]")];
-  const nums = inputs.map((i) => (i.value === "" ? NaN : Number(i.value)));
+  const nums = inputs.map((i) => parseNum(i.value));
   if (nums.some((n) => !(n >= 0))) return null;
   if (test.kind === "bilateral") {
     const extra = { sides: { L: nums[0], R: nums[1] } };
@@ -176,6 +176,17 @@ function readValues(form, test) {
     return { value: Math.round(entryValue(test, extra) * 100) / 100, extra };
   }
   return { value: nums[0], extra: {} };
+}
+
+// Si algún valor se sale de lo razonable, pide confirmación (casi siempre es un error de dedo).
+function confirmPlausible(test, form) {
+  const { min, max } = plausibleRange(test.id);
+  const odd = [...form.querySelectorAll("[data-value]")].map((i) => parseNum(i.value)).filter((v) => v < min || v > max);
+  if (!odd.length) return true;
+  return confirm(
+    `¿Seguro? ${fmt(odd[0], test.decimals)} ${test.unit} se sale de lo normal para "${test.name}" ` +
+      `(esperado entre ${fmt(min, test.decimals)} y ${fmt(max, test.decimals)} ${test.unit}). Revisa que no sea un error al escribir.`
+  );
 }
 
 // Información extra según el tipo: asimetría izquierda/derecha o caída por fatiga.
@@ -255,6 +266,7 @@ function bindForm(root, testId, test) {
       form.querySelector("[data-value]:placeholder-shown, [data-value]")?.focus();
       return;
     }
+    if (!confirmPlausible(test, form)) return;
     const before = snapshot();
     store.addEntry(testId, parsed.value, new FormData(form).get("date"), parsed.extra);
     announce(testId, test, parsed.value, before, snapshot());

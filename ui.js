@@ -45,6 +45,13 @@ export function levelChip(score) {
   return `<span class="chip ${tierClass(score)}">${l.id === "t4" ? icon("star") : ""}${l.name}</span>`;
 }
 
+// Lee un número escrito por el usuario. Acepta coma o punto decimal ("1,85" o "1.85"),
+// porque el teclado del iPhone en español trae coma. Devuelve NaN si está vacío o no es número.
+export function parseNum(text) {
+  const t = String(text ?? "").trim().replace(",", ".");
+  return t === "" || !/^-?\d*\.?\d+$/.test(t) ? NaN : Number(t);
+}
+
 export function fmt(value, decimals) {
   return Number(value).toFixed(decimals);
 }

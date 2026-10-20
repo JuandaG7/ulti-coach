@@ -4,7 +4,7 @@ import { JOINTS } from "../data/joints.js";
 import * as store from "../store.js";
 import { wellness, weeklyLoad, checkinInsights } from "../scoring.js";
 import { openSheet, closeSheet } from "./sheet.js";
-import { icon, today, sparkline, toast } from "../ui.js";
+import { icon, today, sparkline, toast, parseNum } from "../ui.js";
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
@@ -79,7 +79,7 @@ export function openCheckinSheet() {
         <div class="field-row two">
           <label class="field">
             <span>Horas de sueño (promedio)</span>
-            <input name="sleepHours" type="number" inputmode="decimal" step="0.5" min="3" max="12" value="${c.sleepHours ?? ""}" placeholder="7.5">
+            <input name="sleepHours" type="text" inputmode="decimal" autocomplete="off" value="${c.sleepHours ?? ""}" placeholder="7,5">
           </label>
           <label class="field">
             <span>Sesiones esta semana</span>
@@ -139,7 +139,7 @@ export function openCheckinSheet() {
         week,
         date: today(),
         ...answers,
-        sleepHours: d.get("sleepHours") ? Number(d.get("sleepHours")) : null,
+        sleepHours: parseNum(d.get("sleepHours")) >= 0 ? parseNum(d.get("sleepHours")) : null,
         sessions: d.get("sessions") ? Number(d.get("sessions")) : 0,
         rpe: Number(d.get("rpe")),
         pains,

@@ -26,17 +26,20 @@ function load() {
   try {
     const raw = localStorage.getItem(KEY);
     const data = raw ? JSON.parse(raw) : { version: VERSION };
-    return migrate({ version: data.version, entries: data.entries ?? [], profile: data.profile ?? null, checkins: data.checkins ?? [] });
+    return migrate({ version: data.version, entries: data.entries ?? [], profile: data.profile ?? null, checkins: data.checkins ?? [], lastBackup: data.lastBackup ?? null });
   } catch {
-    return { version: VERSION, entries: [], profile: null, checkins: [] };
+    return { version: VERSION, entries: [], profile: null, checkins: [], lastBackup: null };
   }
 }
+
+// false si el navegador no deja guardar (modo privado o almacenamiento lleno).
+export let storageOk = true;
 
 let state = load();
 try {
   localStorage.setItem(KEY, JSON.stringify(state));
 } catch {
-  // Sin almacenamiento: seguimos en memoria.
+  storageOk = false;
 }
 
 // Caché de listas ordenadas por prueba: se arma una vez y se borra al guardar algo.
@@ -46,8 +49,10 @@ function save() {
   sortedCache.clear();
   try {
     localStorage.setItem(KEY, JSON.stringify(state));
+    storageOk = true;
   } catch {
-    // Sin almacenamiento (modo privado): la app sigue funcionando en memoria.
+    // Sin almacenamiento: la app sigue funcionando en memoria y avisa que no se guardará.
+    storageOk = false;
   }
   listeners.forEach((fn) => fn());
 }
@@ -167,6 +172,21 @@ export function clearDemo() {
 export function loadDemo(demoEntries) {
   state.entries = [...state.entries.filter((e) => !e.demo), ...demoEntries];
   save();
+}
+
+// Respaldo: cuándo fue el último y cuántas mediciones propias hay (sin contar el ejemplo).
+export function lastBackup() {
+  return state.lastBackup;
+}
+
+export function markBackup() {
+  const d = new Date();
+  state.lastBackup = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); // fecha local
+  save();
+}
+
+export function ownEntriesCount() {
+  return state.entries.filter((e) => !e.demo).length + state.checkins.length;
 }
 
 export function exportJSON() {
