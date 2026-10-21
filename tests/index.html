@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pruebas · Ulti Coach</title>
+  <style>
+    body { font: 15px/1.5 system-ui, sans-serif; margin: 0; padding: 16px; background: #0f1d17; color: #f3ecdc; }
+    h1 { font-size: 1.3rem; }
+    li { margin: 6px 0; }
+    .ok { color: #8cc7a0; }
+    .fail { color: #ff8a7a; }
+    small { display: block; color: #cfc8b4; }
+  </style>
+</head>
+<body>
+  <h1>Pruebas del análisis de lanzamientos</h1>
+  <p id="summary">Corriendo…</p>
+  <ul id="list"></ul>
+  <script type="module">
+    import { results } from "./forehand.test.js";
+    const failed = results.filter((r) => !r.ok).length;
+    document.getElementById("summary").innerHTML = failed
+      ? `<strong class="fail">${failed} de ${results.length} fallaron</strong>`
+      : `<strong class="ok">Las ${results.length} pasaron</strong>`;
+    document.getElementById("list").innerHTML = results
+      .map((r) => `<li class="${r.ok ? "ok" : "fail"}">${r.ok ? "✓" : "✗"} ${r.name}${r.msg ? `<small>${r.msg}</small>` : ""}</li>`)
+      .join("");
+    window.testResults = results;
+  </script>
+</body>
+</html>

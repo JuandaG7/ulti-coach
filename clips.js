@@ -39,6 +39,11 @@ export async function saveClip(clip) {
   return full;
 }
 
+// Reemplaza un clip ya guardado (mismo id), por ejemplo al corregir la suelta a mano.
+export function updateClip(clip) {
+  return run("readwrite", (s) => s.put(clip));
+}
+
 export function deleteClip(id) {
   return run("readwrite", (s) => s.delete(id));
 }

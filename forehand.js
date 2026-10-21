@@ -15,6 +15,8 @@ const WIND_UP = 0.6;
 const AFTER = 0.05;
 // Lo que se guarda de cada clip alrededor de la suelta.
 export const KEEP = { before: 1.0, after: 0.6 };
+// Debajo de esto (cuadros reales por segundo) los tiempos de la cadena son aproximados.
+export const LOW_FPS = 100;
 
 // ---------- Cuadros compactos ----------
 
@@ -37,7 +39,7 @@ export function trimAroundRelease(frames, releaseT) {
   let last = -Infinity;
   for (const f of frames) {
     const t = f.t - releaseT;
-    if (t < -KEEP.before || t > KEEP.after || t - last < 1 / 120 - 1e-6) continue;
+    if (t < -KEEP.before || t > KEEP.after || t - last < 0.9 / 120) continue; // 0.9: los tiempos vienen redondeados a 0.1 ms
     out.push({ ...f, t: r4(t) });
     last = t;
   }
@@ -159,8 +161,10 @@ function centerOfMass(j) {
 
 // ---------- Análisis ----------
 
-// clip: { frames (compactos), hand: "R"|"L", w, h }. Devuelve null si no se ve el lanzamiento.
-export function analyzeForehand({ frames, hand = "R", w = 1, h = 1 }) {
+// clip: { frames (compactos), hand: "R"|"L", w, h, fps?, releaseLocked? }. Devuelve null si no se ve el lanzamiento.
+// fps: cuadros distintos por segundo real (de pose.analyzeVideo con dedupe); define la precisión de los tiempos.
+// releaseLocked: la suelta la marcó el jugador a mano y está en t = 0 (ver moveRelease).
+export function analyzeForehand({ frames, hand = "R", w = 1, h = 1, fps = null, releaseLocked = false }) {
   if (!frames?.length) return null;
   const t = frames.map((f) => f.t);
   const s = hand === "L" ? "L" : "R"; // lado del brazo que lanza
@@ -198,8 +202,11 @@ export function analyzeForehand({ frames, hand = "R", w = 1, h = 1 }) {
   const hipW = yawSpeed(t, world.LH, world.RH);
   const trunkW = yawSpeed(t, world.LS, world.RS);
 
-  // Suelta = pico de velocidad de la muñeca que lanza (lejos de los bordes del video).
-  const rel = argmax(wristV, (i) => i >= 3 && i < t.length - 3);
+  // Suelta = pico de velocidad de la muñeca que lanza (lejos de los bordes del video),
+  // o el cuadro que marcó el jugador.
+  const rel = releaseLocked
+    ? t.reduce((best, x, i) => (Math.abs(x) < Math.abs(t[best]) ? i : best), 0)
+    : argmax(wristV, (i) => i >= 3 && i < t.length - 3);
   if (rel < 0) return null;
   const tr = t[rel];
   const inWin = (i) => t[i] >= tr - WIND_UP && t[i] <= tr + AFTER;
@@ -209,8 +216,9 @@ export function analyzeForehand({ frames, hand = "R", w = 1, h = 1 }) {
   };
   const peaks = { hip: peakMs(hipW), trunk: peakMs(trunkW), elbow: peakMs(elbowV), wrist: 0 };
 
-  // Orden cadera → hombros → codo → muñeca (10 ms de tolerancia: es la precisión del video).
-  const TOL = 10;
+  // Orden cadera → hombros → codo → muñeca, con un cuadro de tolerancia (la precisión del video;
+  // mínimo 10 ms). A 30 fps eso son 33 ms: dos picos más juntos que eso no se pueden ordenar.
+  const TOL = Math.max(10, fps ? 1000 / fps : 10);
   const chainOrder = [peaks.hip, peaks.trunk, peaks.elbow].includes(null)
     ? null
     : [peaks.hip <= peaks.trunk + TOL, peaks.trunk <= peaks.elbow + TOL, peaks.elbow <= peaks.wrist + TOL].filter(Boolean).length;
@@ -268,6 +276,9 @@ export function analyzeForehand({ frames, hand = "R", w = 1, h = 1 }) {
   const warnings = [];
   if (detected < 0.8) warnings.push("El cuerpo no se ve bien en el momento del lanzamiento.");
   if (tr - t[0] < WIND_UP * 0.75) warnings.push("El video empieza muy cerca de la suelta: graba desde antes del armado.");
+  if (fps && fps < LOW_FPS) {
+    warnings.push(`El video tiene unos ${Math.round(fps)} cuadros por segundo: la suelta cae entre dos cuadros, así que la velocidad de muñeca y los tiempos de la cadena son aproximados (±${Math.round(1000 / fps)} ms). Graba en cámara lenta (120 o 240 fps).`);
+  }
 
   // Curvas de la cadena para la gráfica (cada una dividida por su pico en la ventana).
   const norm = (series) => {
@@ -294,7 +305,7 @@ export function analyzeForehand({ frames, hand = "R", w = 1, h = 1 }) {
     },
     peaks,
     chain,
-    quality: { detected, ok: !warnings.length, warnings },
+    quality: { detected, fps, ok: !warnings.length, warnings },
   };
 }
 
@@ -360,6 +371,36 @@ export const METRICS = [
 ];
 
 export const METRICS_BY_ID = Object.fromEntries(METRICS.map((m) => [m.id, m]));
+
+// Mueve la suelta del clip al instante dt (segundos, relativo a la suelta actual): corre todos los
+// cuadros para que la nueva suelta quede en t = 0. shift acumula el corrimiento, para poder volver
+// a la suelta automática.
+export function moveRelease(clip, dt) {
+  const shift = (clip.shift ?? 0) + dt;
+  const locked = Math.abs(shift) > 1e-4;
+  return { ...clip, shift: locked ? r4(shift) : 0, releaseLocked: locked, frames: clip.frames.map((f) => ({ ...f, t: r4(f.t - dt) })) };
+}
+
+// ¿Qué tan repetibles son tus números? Desviación estándar de cada métrica entre tus últimos videos,
+// comparada con la tolerancia de la métrica (span). Mezcla dos cosas: lo que de verdad cambias entre
+// lanzamientos y el error de medir con video. Las dos importan: si una métrica salta más que tu
+// brecha con los pros, un solo video no alcanza para sacar conclusiones.
+// Umbrales (estimación): < 25 % de la tolerancia = estable, < 50 % = variable, más = muy variable.
+export const CONSISTENCY_MIN = 3;
+export function consistency(analyses, bands = {}) {
+  const ok = analyses.filter((a) => a?.quality.ok).slice(0, 8);
+  const out = {};
+  for (const m of METRICS.filter((x) => x.scope === "pro")) {
+    const vals = ok.map((a) => a.metrics[m.id]).filter((v) => v != null && Number.isFinite(v));
+    if (vals.length < CONSISTENCY_MIN) continue;
+    const mean = vals.reduce((s, v) => s + v, 0) / vals.length;
+    const sd = Math.sqrt(vals.reduce((s, v) => s + (v - mean) ** 2, 0) / (vals.length - 1));
+    const ref = bands[m.id] ?? { lo: Math.abs(mean), hi: Math.abs(mean) };
+    const ratio = sd / m.span(ref);
+    out[m.id] = { n: vals.length, mean, sd, ratio, level: ratio < 0.25 ? "estable" : ratio < 0.5 ? "variable" : "muy variable" };
+  }
+  return out;
+}
 
 // Rango pro de una métrica: con pocos clips, de mínimo a máximo; con 5 o más, del percentil 20 al 80
 // (para que un clip raro no estire el rango).

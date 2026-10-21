@@ -30,13 +30,30 @@ export async function createPoseLandmarker() {
 let timestampBase = 0;
 
 // Recorre el video cuadro por cuadro (a sampleFps) y guarda la pose de cada uno.
-export async function analyzeVideo(video, landmarker, { sampleFps = 60, onProgress } = {}) {
+// Con dedupe, se salta los cuadros repetidos (un video de 30 fps muestreado a 60 repite cada cuadro):
+// así no se inventan datos, el análisis es más rápido y frames.fps dice cuántos cuadros distintos
+// por segundo tiene de verdad el video.
+export async function analyzeVideo(video, landmarker, { sampleFps = 60, onProgress, dedupe = false } = {}) {
   const duration = video.duration;
   const step = 1 / sampleFps;
   const frames = [];
+  const thumb = dedupe ? document.createElement("canvas").getContext("2d", { willReadFrequently: true }) : null;
+  if (thumb) thumb.canvas.width = thumb.canvas.height = 32;
+  let prev = null;
 
   for (let t = 0; t < duration; t += step) {
     await seekTo(video, t);
+    if (thumb) {
+      // Miniatura de 32×32: si es idéntica a la anterior, el navegador mostró el mismo cuadro.
+      thumb.drawImage(video, 0, 0, 32, 32);
+      const px = thumb.getImageData(0, 0, 32, 32).data;
+      const same = prev && px.every((v, i) => v === prev[i]);
+      prev = px;
+      if (same) {
+        onProgress?.(t / duration);
+        continue;
+      }
+    }
     const result = landmarker.detectForVideo(video, timestampBase + Math.round(t * 1000));
     frames.push({
       t,
@@ -48,6 +65,12 @@ export async function analyzeVideo(video, landmarker, { sampleFps = 60, onProgre
 
   timestampBase += Math.ceil(duration * 1000) + 1000;
   await seekTo(video, 0);
+  if (dedupe) {
+    // Con el cuerpo quieto también se repiten cuadros, así que el fps sale del espacio típico entre
+    // cuadros distintos (percentil 25), no de cuántos hay.
+    const dts = frames.slice(1).map((f, i) => f.t - frames[i].t).sort((a, b) => a - b);
+    frames.fps = dts.length ? 1 / dts[Math.floor(dts.length / 4)] : sampleFps;
+  }
   return frames;
 }
 

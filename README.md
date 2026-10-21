@@ -44,6 +44,12 @@ Luego abre http://localhost:8765
 | `clips.js` | Biblioteca pro y tus videos: solo esqueleto y métricas, en el celular (IndexedDB) |
 | `sw.js`, `manifest.json` | Permiten instalarla en el iPhone como app |
 
+## Pruebas automáticas
+
+Con el servidor corriendo, abre http://localhost:8765/tests/ : arma lanzamientos sintéticos (donde se sabe
+la respuesta) y verifica que el análisis del forehand los mida bien. Córrelas antes de publicar cambios
+en `forehand.js`.
+
 ## Cómo se calculan los puntajes
 
 - Cada prueba: 0 = nivel base, 100 = nivel élite (lineal, con tope en 0 y 100).

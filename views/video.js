@@ -7,9 +7,9 @@ import { level } from "../scoring.js";
 import { MUSCLES } from "../data/muscles.js";
 import {
   analyzeForehand, compactFrames, trimAroundRelease, point2D, METRICS, METRICS_BY_ID, BONES,
-  proBand, scoreVsPro, gapSide,
+  proBand, scoreVsPro, gapSide, moveRelease, consistency, CONSISTENCY_MIN,
 } from "../forehand.js";
-import { listClips, saveClip, deleteClip } from "../clips.js";
+import { listClips, saveClip, updateClip, deleteClip } from "../clips.js";
 import { icon, levelChip, ring, today, fmtDate, tierClass, toast } from "../ui.js";
 import { drillChips, bindDrills } from "./exercise-sheet.js";
 import { openForehandGuide } from "./forehand-guide.js";
@@ -43,6 +43,7 @@ const PRO_SOURCES = [
 ];
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const fmtVal = (m, v) => (v == null ? "–" : `${Number(v).toFixed(m.decimals)}`);
 
 let el = null;
@@ -151,6 +152,13 @@ function build() {
           <span class="num tau" data-tau>0 ms</span>
           <button type="button" class="link" data-act="release">Ir a la suelta</button>
         </div>
+        <div class="release-fix" data-release-fix>
+          <p class="muted small" data-release-note></p>
+          <div class="release-fix-actions">
+            <button type="button" class="btn ghost small-btn" data-act="mark-release">Marcar suelta aquí</button>
+            <button type="button" class="btn ghost small-btn" data-act="auto-release" hidden>Volver a automática</button>
+          </div>
+        </div>
       </section>
 
       <section class="card">
@@ -163,6 +171,7 @@ function build() {
 
       <section class="card" data-vs-pro></section>
       <section class="card" data-focus hidden></section>
+      <section class="card" data-consistency></section>
       <section class="card" data-own></section>
 
       <button type="button" class="btn ghost" data-act="export">${icon("download")} Descargar datos (JSON)</button>
@@ -279,15 +288,18 @@ async function analyzeFile(video, file, { kind, factor, hand }) {
   const raw = await pose.analyzeVideo(video, landmarker, {
     sampleFps: video.duration > 8 ? 30 : 60,
     onProgress: (p) => (progress.value = p),
+    dedupe: true,
   });
   progress.hidden = true;
   const frames = compactFrames(raw, factor);
   const w = video.videoWidth;
   const h = video.videoHeight;
-  const full = analyzeForehand({ frames, hand, w, h });
+  // Cuadros distintos por segundo REAL (cámara lenta ×4 = 4 veces más); el recorte guarda hasta 120.
+  const fps = Math.round(Math.min(120, raw.fps * factor));
+  const full = analyzeForehand({ frames, hand, w, h, fps });
   if (!full) throw new Error("No encontramos el lanzamiento: revisa que se vea todo el cuerpo.");
   return {
-    clip: { kind, name: file.name.replace(/\.[^.]+$/, ""), date: today(), hand, factor, w, h, frames: trimAroundRelease(frames, full.release) },
+    clip: { kind, name: file.name.replace(/\.[^.]+$/, ""), date: today(), hand, factor, fps, w, h, frames: trimAroundRelease(frames, full.release) },
     release: full.release,
   };
 }
@@ -430,6 +442,16 @@ function wire() {
     pause();
     setTau(0);
   });
+  // Corregir la suelta a mano: la automática es el pico de velocidad de la muñeca, y con video
+  // borroso o a 30 fps puede caer un cuadro antes o después.
+  $('[data-act="mark-release"]').addEventListener("click", () => {
+    pause();
+    if (Math.abs(tau) > 1e-4) fixRelease(tau);
+  });
+  $('[data-act="auto-release"]').addEventListener("click", () => {
+    pause();
+    fixRelease(-(current.clip.shift ?? 0));
+  });
   $('[data-act="overlay"]').addEventListener("click", () => {
     overlay = !overlay;
     paintDuo(pros.find((c) => c.id === proId));
@@ -476,6 +498,27 @@ function wire() {
     requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
+}
+
+async function fixRelease(dt) {
+  const clip = moveRelease(current.clip, dt);
+  analyses.delete(clip.id);
+  if (!analysisOf(clip)) {
+    toast(`${icon("alert")} En ese momento no se ve el cuerpo: elige otro cuadro.`);
+    return;
+  }
+  if (clip.id !== "temp") {
+    try {
+      await updateClip(clip);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+  mine = mine.map((c) => (c.id === clip.id ? clip : c));
+  const live = current.video ? { video: true, release: current.release + dt, factor: current.factor } : null;
+  showClip(clip, live);
+  paintLists();
+  toast(`${icon("check")} ${clip.releaseLocked ? "Suelta marcada: recalculamos todo desde ese cuadro." : "De vuelta a la suelta automática."}`);
 }
 
 function lock(on) {
@@ -576,8 +619,11 @@ function paintResult() {
   const overall = scored.length ? Math.round(scored.reduce((s, r) => s + r.score, 0) / scored.length) : null;
 
   lastScores = Object.fromEntries(rows.map((r) => [r.m.id, r.score]));
+  const steady = consistency(mine.map(analysisOf), bands);
   $("[data-vs-pro]").innerHTML = vsProCard(rows, overall, usable);
-  paintFocus(rows);
+  paintFocus(rows, steady);
+  $("[data-consistency]").innerHTML = consistencyCard(steady);
+  paintReleaseFix(clip, a);
   $("[data-own]").innerHTML = ownCard(clip, a);
   paintChainText(a);
   layout();
@@ -644,10 +690,51 @@ function metricRow(m, value, band, score) {
     </li>`;
 }
 
+// Suelta automática o marcada a mano, y cuántos cuadros por segundo tiene el video.
+function paintReleaseFix(clip, a) {
+  const locked = !!clip.releaseLocked;
+  const fps = a.quality.fps;
+  $('[data-act="auto-release"]').hidden = !locked;
+  $("[data-release-note]").textContent =
+    (locked ? "Suelta marcada por ti." : "Suelta automática (cuando la muñeca va más rápido).") +
+    " Si no es el cuadro donde el disco sale de la mano, ve a ese cuadro y márcalo." +
+    (fps ? ` Video a ${fps} cuadros por segundo reales.` : "");
+}
+
+// ¿Qué tan repetibles son tus números? Sin esto, una diferencia con los pros puede ser solo ruido.
+const STEADY_TIER = { estable: "tier-t3", variable: "tier-t2", "muy variable": "tier-t1" };
+function consistencyCard(steady) {
+  const n = mine.filter((c) => analysisOf(c)?.quality.ok).length;
+  const ids = Object.keys(steady);
+  if (!ids.length) {
+    return `
+      <h2 class="section-title">¿Qué tan confiables son tus números?</h2>
+      <p class="muted small section-sub">Prueba de repetibilidad: graba ${CONSISTENCY_MIN + 2} forehands iguales seguidos, con la cámara en el mismo lugar, y analízalos uno por uno. Así vemos qué métricas son estables y cuáles saltan de un video a otro.</p>
+      <p class="small">Llevas <span class="num">${Math.min(n, CONSISTENCY_MIN)}</span> de ${CONSISTENCY_MIN} videos sin avisos de calidad.</p>`;
+  }
+  const rows = METRICS.filter((m) => steady[m.id]).map((m) => {
+    const c = steady[m.id];
+    return `
+      <li class="steady-row">
+        <span class="metric-name">${m.name}</span>
+        <span class="muted small num">±${c.sd.toFixed(m.id === "chainOrder" ? 1 : m.decimals)} ${m.unit}</span>
+        <span class="chip ${STEADY_TIER[c.level]}">${c.level[0].toUpperCase() + c.level.slice(1)}</span>
+      </li>`;
+  });
+  const noisy = METRICS.filter((m) => steady[m.id]?.level === "muy variable");
+  return `
+    <h2 class="section-title">¿Qué tan confiables son tus números?</h2>
+    <p class="muted small section-sub">Cuánto cambia cada métrica entre tus últimos ${Math.max(...ids.map((id) => steady[id].n))} videos. Mezcla lo que de verdad cambias entre lanzamientos y el error de medir con video: las dos cosas importan.</p>
+    <ul class="metric-list">${rows.join("")}</ul>
+    ${noisy.length ? `<p class="small">${icon("alert")} ${capitalize(noisy.map((m) => m.name.toLowerCase()).join(", "))}: salta${noisy.length > 1 ? "n" : ""} mucho entre videos, así que no ${noisy.length > 1 ? "las" : "la"} usamos para decirte qué trabajar. Graba en cámara lenta y con la cámara siempre en el mismo lugar.</p>` : ""}
+    <p class="muted small">Umbrales estimados: estable = menos de un cuarto de la tolerancia de la métrica.</p>`;
+}
+
 // Brecha más grande → qué trabajar, conectado con Cuerpo y los ejercicios.
-function paintFocus(rows) {
+// No se aconseja sobre métricas que saltan mucho entre tus videos: podría ser solo ruido.
+function paintFocus(rows, steady = {}) {
   const box = $("[data-focus]");
-  const gaps = rows.filter((r) => r.score != null && r.score < 85).sort((x, y) => x.score - y.score);
+  const gaps = rows.filter((r) => r.score != null && r.score < 85 && steady[r.m.id]?.level !== "muy variable").sort((x, y) => x.score - y.score);
   if (!rows.some((r) => r.score != null)) {
     box.hidden = true;
     return;
@@ -1009,7 +1096,7 @@ async function shareLibrary() {
   // 3 decimales (≈ 1 mm) bastan para las métricas y el archivo pesa menos.
   const r3 = (v) => Math.round(v * 1000) / 1000;
   const slim = (f) => ({ t: r3(f.t), p: f.p && f.p.map(r3), w: f.w && f.w.map(r3) });
-  const data = { type: LIB_TYPE, version: 1, clips: pros.map(({ id, name, date, hand, factor, w, h, frames }) => ({ id, name, date, hand, factor, w, h, frames: frames.map(slim) })) };
+  const data = { type: LIB_TYPE, version: 1, clips: pros.map(({ id, name, date, hand, factor, fps, w, h, frames }) => ({ id, name, date, hand, factor, fps, w, h, frames: frames.map(slim) })) };
   const file = new File([JSON.stringify(data)], "biblioteca-pro-ulti-coach.json", { type: "application/json" });
   if (navigator.canShare?.({ files: [file] })) {
     try {
@@ -1033,7 +1120,7 @@ async function importLibrary(text) {
   let added = 0;
   for (const c of data.clips) {
     if (!Array.isArray(c.frames) || !c.frames.length || have.has(c.id)) continue;
-    const saved = await saveClip({ id: c.id, kind: "pro", name: String(c.name ?? "Pro").slice(0, 40), date: c.date ?? today(), hand: c.hand === "L" ? "L" : "R", factor: c.factor ?? 1, w: c.w, h: c.h, frames: c.frames });
+    const saved = await saveClip({ id: c.id, kind: "pro", name: String(c.name ?? "Pro").slice(0, 40), date: c.date ?? today(), hand: c.hand === "L" ? "L" : "R", factor: c.factor ?? 1, fps: Number(c.fps) || null, w: c.w, h: c.h, frames: c.frames });
     pros.unshift(saved);
     added++;
   }

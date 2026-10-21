@@ -10,7 +10,7 @@ shell = {x[2:] for x in re.findall(r'"(\./[^"]*)"', sw) if x != "./"}
 files = set()
 for d, _, fs in os.walk(root):
     rel = os.path.relpath(d, root)
-    if rel.split(os.sep)[0] in (".git", "tools"):
+    if rel.split(os.sep)[0] in (".git", ".claude", "tools", "tests"):
         continue
     for f in fs:
         p = os.path.relpath(os.path.join(d, f), root)

@@ -788,3 +788,10 @@ progress { width: 100%; margin-top: 8px; accent-color: var(--accent); }
 
 /* Nombres y títulos largos no deben romper filas */
 .focus-name, .cat-name, .row-main > span:first-child { overflow-wrap: anywhere; }
+
+/* Video: corregir la suelta y confiabilidad de las métricas */
+.release-fix { margin-top: 10px; display: grid; gap: 8px; }
+.release-fix p { margin: 0; }
+.release-fix-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.steady-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; }
+.steady-row .metric-name { flex: 1; }
