@@ -4,7 +4,7 @@
 // - Al publicar cambios hay que subir CACHE: el iPhone descarga la versión nueva por detrás
 //   y la usa en la siguiente apertura (la página se recarga sola una vez).
 // - Librerías y modelo de pose (CDN): caché aparte que sobrevive entre versiones, porque pesan.
-const CACHE = "ulti-coach-v18";
+const CACHE = "ulti-coach-v19";
 const CDN_CACHE = "ulti-coach-cdn";
 const SHELL = [
   "./", "./index.html", "./style.css", "./app.js", "./store.js", "./scoring.js", "./ui.js",
@@ -27,7 +27,9 @@ self.addEventListener("activate", (e) => {
   e.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE && k !== CDN_CACHE).map((k) => caches.delete(k))))
+      // Solo borra versiones viejas de Ulti Coach: otras apps del mismo dominio (juandag7.github.io,
+      // por ejemplo Narra) guardan aquí su propia copia sin conexión y no hay que tocarla.
+      .then((keys) => Promise.all(keys.filter((k) => k.startsWith("ulti-coach") && k !== CACHE && k !== CDN_CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
