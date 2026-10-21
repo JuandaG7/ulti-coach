@@ -203,6 +203,11 @@ export const EXERCISES = {
     mov: "Despega hombros y piernas del piso formando una banana y aguanta.",
     error: "Que la espalda baja se despegue: dobla las rodillas si hace falta.",
   },
+  "Forehand con pausa en el armado": {
+    pos: "Con disco y un compañero o una pared a 10–15 m, en tu pivot de forehand.",
+    mov: "Arma el lanzamiento y quédate quieto 1 s. Luego gira primero la cadera, deja que los hombros la sigan y suelta el brazo al final con golpe de muñeca.",
+    error: "Lanzar solo con el brazo: si la cadera no se mueve antes que la mano, el disco sale sin fuerza.",
+  },
   "Lanzamiento rotacional": {
     pos: "De lado a una pared, balón medicinal a la altura de la cadera.",
     mov: "Gira desde la cadera y lanza el balón contra la pared, como un forehand o backhand.",
@@ -242,6 +247,11 @@ export const EXERCISES = {
     pos: "Dentro de la barra hexagonal, pies a la anchura de la cadera, espalda neutra.",
     mov: "Empuja el piso con las piernas y sube hasta estar erguido; baja controlado.",
     error: "Tirar con la espalda redondeada: pecho arriba y espalda recta.",
+  },
+  "Pivot con paso largo y forehand": {
+    pos: "Con disco, pie de pivot fijo y un cono a una zancada larga hacia el lado del forehand.",
+    mov: "Da un paso largo y bajo hasta el cono, transfiere el peso al pie de paso y lanza. Vuelve al centro y repite.",
+    error: "Lanzar con el peso atrás o caerte hacia adelante: termina equilibrado sobre el pie de paso.",
   },
   "Plancha Copenhagen": {
     pos: "Plancha lateral con la pierna de arriba apoyada en un banco (rodilla para empezar, tobillo para avanzar).",

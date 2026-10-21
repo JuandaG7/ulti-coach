@@ -18,6 +18,15 @@ Luego abre http://localhost:8765
 - Celular quieto (trípode o apoyado).
 - Clips cortos: 2–5 segundos por lanzamiento.
 
+## Comparar tu forehand con pros
+
+1. En **Video → Biblioteca pro**, agrega grabaciones de pantalla de pros (2–8 s, cuerpo completo).
+   La app guarda solo el esqueleto y las métricas en el celular: **el video no se guarda ni se publica**.
+2. Analiza tu forehand: verás el lado a lado sincronizado en la suelta, la cadena de lanzamiento
+   y la tabla "tú vs rango pro" (con 3 o más clips de pros el rango empieza a ser útil).
+3. Las métricas que dependen del ángulo de cámara (codo, altura de suelta) solo se comparan
+   contra tus propios videos.
+
 ## Archivos
 
 | Archivo | Qué hace |
@@ -31,6 +40,8 @@ Luego abre http://localhost:8765
 | `scoring.js` | Cálculo de puntajes y prioridades |
 | `store.js` | Guarda las mediciones en el dispositivo |
 | `pose.js`, `metrics.js` | Análisis de video con MediaPipe |
+| `forehand.js` | Métricas del forehand (cadena cinética, pivot, peso) y rango pro |
+| `clips.js` | Biblioteca pro y tus videos: solo esqueleto y métricas, en el celular (IndexedDB) |
 | `sw.js`, `manifest.json` | Permiten instalarla en el iPhone como app |
 
 ## Cómo se calculan los puntajes
