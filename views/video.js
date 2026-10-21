@@ -216,12 +216,15 @@ function build() {
           </label>
           <p class="muted small status" data-status="pro"></p>
           <progress value="0" max="1" hidden data-progress="pro"></progress>
-          <video class="work-video" playsinline muted preload="auto" data-work></video>
           <ul class="clip-list" data-pro-list></ul>
           <button type="button" class="btn ghost block" data-act="share-lib" hidden>${icon("upload")} Compartir biblioteca con mi equipo</button>
         </div>
       </details>
     </section>
+
+    <!-- Video de trabajo: aquí se analiza todo. Siempre "en pantalla" (invisible), porque el iPhone
+         no carga videos que estén ocultos (dentro de una sección cerrada o con display: none). -->
+    <video class="work-video" playsinline muted preload="auto" data-work></video>
 
     <section class="card">
       <details data-hist>
@@ -274,12 +277,20 @@ async function loadLibrary() {
 async function analyzeFile(video, file, { kind, factor, hand }) {
   const status = $(`[data-status="${kind}"]`);
   const progress = $(`[data-progress="${kind}"]`);
+  status.textContent = "Abriendo el video…";
   const url = URL.createObjectURL(file);
   video.src = url;
+  video.load();
+  // loadedmetadata basta (duración y tamaño): cada cuadro se carga al buscarlo. El iPhone a veces
+  // no dispara loadeddata hasta que el video se reproduce.
   await new Promise((resolve, reject) => {
-    video.addEventListener("loadeddata", resolve, { once: true });
-    video.addEventListener("error", () => reject(new Error("video")), { once: true });
+    const timer = setTimeout(() => reject(new Error("No se pudo abrir el video. Prueba recortarlo en Fotos (Editar) o grabarlo de nuevo.")), 20000);
+    video.addEventListener("loadedmetadata", () => (clearTimeout(timer), resolve()), { once: true });
+    video.addEventListener("error", () => (clearTimeout(timer), reject(new Error("Este video no se puede abrir aquí. Prueba recortarlo en Fotos (Editar) y vuelve a intentarlo."))), { once: true });
   });
+  if (!Number.isFinite(video.duration) || !video.duration) {
+    throw new Error("No pudimos leer la duración del video. Recórtalo en Fotos (Editar) y vuelve a intentarlo.");
+  }
   if (video.duration > MAX_SECONDS) {
     throw new Error(`El clip dura ${Math.round(video.duration)} s. Recórtalo a 2–8 s alrededor del lanzamiento (en Fotos: Editar) y vuelve a intentarlo.`);
   }
@@ -314,10 +325,18 @@ function wire() {
     if (!file || busy) return;
     const factor = Number(el.querySelector("[name=my-speed]:checked").value);
     const status = $('[data-status="mine"]');
+    const work = $("[data-work]");
     lock(true);
     pause();
     try {
-      const { clip, release } = await analyzeFile(meVideo, file, { kind: "mine", factor, hand: myHand() });
+      const { clip, release } = await analyzeFile(work, file, { kind: "mine", factor, hand: myHand() });
+      // El video pasa al reproductor (solo mientras la página esté abierta: nunca se guarda).
+      $("[data-result]").hidden = false;
+      if (meVideo.src) URL.revokeObjectURL(meVideo.src);
+      meVideo.src = work.src;
+      work.removeAttribute("src");
+      work.load();
+      meVideo.addEventListener("loadedmetadata", () => setTau(tau), { once: true });
       let saved = clip;
       try {
         saved = await saveClip(clip);
@@ -333,9 +352,10 @@ function wire() {
       console.error(err);
       status.textContent = err.message?.length > 10 ? err.message : "No se pudo analizar ese video.";
       $('[data-progress="mine"]').hidden = true;
-      // El video que falló quedó cargado: volvemos a mostrar el análisis anterior (solo esqueleto).
-      if (current) showClip(current.clip);
-      else meVideo.removeAttribute("src");
+      // El video que falló queda en el video de trabajo: lo soltamos. Tu análisis anterior sigue igual.
+      if (work.src) URL.revokeObjectURL(work.src);
+      work.removeAttribute("src");
+      work.load();
     }
     lock(false);
   });

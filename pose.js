@@ -76,8 +76,10 @@ export async function analyzeVideo(video, landmarker, { sampleFps = 60, onProgre
 
 function seekTo(video, t) {
   if (Math.abs(video.currentTime - t) < 1e-6) return Promise.resolve();
-  return new Promise((resolve) => {
-    video.addEventListener("seeked", resolve, { once: true });
+  // Con límite de tiempo: si el celular nunca entrega el cuadro, mejor un error claro que quedarse pegado.
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("El video dejó de responder. Ciérralo, recórtalo en Fotos y vuelve a intentarlo.")), 8000);
+    video.addEventListener("seeked", () => (clearTimeout(timer), resolve()), { once: true });
     video.currentTime = t;
   });
 }
