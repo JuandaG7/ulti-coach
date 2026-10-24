@@ -403,6 +403,77 @@ export const EXERCISES = {
     mov: "Sube los brazos formando una Y, luego una T, luego una W, con los pulgares hacia arriba.",
     error: "Encoger los hombros hacia las orejas: llévalos hacia atrás y abajo.",
   },
+  // ---------- Vuelta tras lesión (data/return.js) ----------
+  "Isométrico de pantorrilla": {
+    pos: "De pie frente a una pared, manos apoyadas, sobre la pierna que se recupera.",
+    mov: "Sube un poco el talón y quédate quieto en esa altura el tiempo indicado, empujando el piso con la punta.",
+    error: "Subir hasta donde duele: la altura es la que aguantas sin dolor, aunque sea poca.",
+  },
+  "Sentadilla isométrica en pared": {
+    pos: "Espalda apoyada en la pared, pies a un paso de ella, a la anchura de la cadera.",
+    mov: "Baja hasta donde no duela (sin pasar de rodillas a 90°) y aguanta quieto.",
+    error: "Que las rodillas se vayan hacia adentro: apuntan a los dedos de los pies.",
+  },
+  "Isométrico de aductores con balón": {
+    pos: "Acostado boca arriba, rodillas dobladas, un balón o cojín entre las rodillas.",
+    mov: "Aprieta el balón con las rodillas al 50–70 % de tu fuerza y aguanta.",
+    error: "Apretar al máximo desde el primer día: la fuerza sube con las semanas, sin dolor.",
+  },
+  "Isométrico de isquios en puente": {
+    pos: "Acostado boca arriba, talones sobre el piso o un escalón, rodillas un poco dobladas.",
+    mov: "Empuja los talones hacia el piso y hacia ti, sube la cadera un poco y aguanta.",
+    error: "Sentir el tirón en la espalda baja: aprieta glúteos y baja un poco la cadera.",
+  },
+  "Rotación externa isométrica": {
+    pos: "De lado junto a una pared, codo doblado a 90° y pegado al cuerpo, dorso de la mano contra la pared.",
+    mov: "Empuja la mano hacia afuera contra la pared, sin mover el brazo, y aguanta.",
+    error: "Separar el codo del cuerpo: el empuje sale del hombro, no del brazo entero.",
+  },
+  "Trote continuo": {
+    pos: "Pasto o pista, zapatillas de correr.",
+    mov: "Trota a un ritmo en el que puedas hablar. Si al día siguiente la zona está peor, baja el tiempo.",
+    error: "Subir el ritmo porque te sientes bien: en esta etapa se suma tiempo, no velocidad.",
+  },
+  "Pases cortos de forehand y backhand": {
+    pos: "Con un compañero a 10 m, o lanzando contra una pared.",
+    mov: "Pases suaves y planos, con buena técnica, alternando forehand y backhand.",
+    error: "Lanzar fuerte para probar el hombro: primero técnica, después distancia.",
+  },
+  "Cambios de dirección": {
+    pos: "Dos conos a 5 m. Calienta bien antes.",
+    mov: "Corre, frena en 2–3 pasos, planta y sal hacia el otro lado. Sube la velocidad semana a semana.",
+    error: "Frenar con la pierna recta: baja la cadera y frena con varios pasos cortos.",
+  },
+  "Cortes de ultimate sin marca": {
+    pos: "En cancha, con alguien que lance o con conos.",
+    mov: "Corte de ida y vuelta como en un partido (in-cut, out-cut), sin defensor, al 75–90 %.",
+    error: "Hacerlos con miedo y sin frenar: si no puedes plantar con confianza, vuelve a la etapa anterior.",
+  },
+  "Lanzamientos a": {
+    pos: "Con un compañero a la distancia indicada.",
+    mov: "Forehands y backhands controlados, subiendo la distancia de a poco.",
+    error: "Hucks desde el primer día: la distancia se gana cuando el hombro no duele al día siguiente.",
+  },
+  "Hucks": {
+    pos: "En cancha, calentado y después de varios pases.",
+    mov: "Lanzamientos largos a media potencia, con buena técnica y sin forzar el hombro.",
+    error: "Lanzar al máximo: en esta etapa la potencia sube semana a semana.",
+  },
+  "Práctica con el equipo sin defensa": {
+    pos: "Con tu equipo, en una práctica normal.",
+    mov: "Haz los ejercicios de pases y cortes, sin defensa ni contacto, y sal antes si la zona molesta.",
+    error: "Meterte a jugar puntos: primero que la zona aguante una práctica entera.",
+  },
+  "Práctica completa": {
+    pos: "Con tu equipo.",
+    mov: "Práctica entera, incluyendo puntos con defensa.",
+    error: "Ignorar el dolor del día siguiente: si aparece, vuelve a la práctica sin defensa.",
+  },
+  "Medio partido": {
+    pos: "En un partido o amistoso.",
+    mov: "Juega la mitad de los puntos y ve sumando hasta el partido completo.",
+    error: "Jugar un torneo entero de una: el cansancio es cuando más se recae.",
+  },
 };
 
 // Busca el ejercicio por el prefijo más largo que coincida con el texto del ejercicio.

@@ -12,6 +12,7 @@ import { openShareSheet } from "./share.js";
 import { openSendSheet } from "./send.js";
 import { openCheckinSheet } from "./checkin.js";
 import { backupNow, needsBackup } from "./backup.js";
+import { nextSession } from "./plan.js";
 
 export function render(root) {
   const p = store.profile();
@@ -32,6 +33,8 @@ export function render(root) {
     ${hasData ? scoreCard(overall, p) : emptyScoreCard(p)}
 
     ${stepCard(checkin)}
+
+    ${hasData ? planCard() : ""}
 
     ${hasData ? focusCard(mode) : ""}
 
@@ -123,6 +126,22 @@ function starterCard(step, action) {
       <div class="starter-list">${STARTER_TESTS.map(row).join("")}</div>
       ${action}
     </section>`;
+}
+
+// Tu siguiente sesión del plan (o la semana completa).
+function planCard() {
+  const { plan, done, next } = nextSession();
+  const total = plan.sessions.length;
+  return `
+    <a class="card plan-card" href="#plan">
+      <span class="plan-card-icon">${icon("calendar")}</span>
+      <span class="plan-card-text">
+        <span class="eyebrow">Tu plan · ${done.size} de ${total} esta semana${plan.injury ? ` · Vuelta: etapa ${plan.stage}` : ""}</span>
+        <span class="step-title">${next ? `Día ${next.n}: ${next.title}` : "Semana completa"}</span>
+        <span class="muted small">${next ? `${next.blocks.reduce((n, b) => n + b.items.length, 0)} ejercicios armados con tus datos` : "Descansa y haz tu check-in del lunes."}</span>
+      </span>
+      ${icon("chevron")}
+    </a>`;
 }
 
 // Foco #1 a la vista; los otros dos, plegados.

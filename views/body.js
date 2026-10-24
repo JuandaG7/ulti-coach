@@ -32,6 +32,7 @@ export function render(root, selected) {
     <header class="page-head">
       <h1 class="display">Cuerpo</h1>
       <p class="muted small">Cada músculo se califica con las pruebas que lo miden, contra el nivel Excelente.</p>
+      <a class="btn secondary small-btn head-link" href="#blindaje">${icon("shield")} Articulaciones: Blindaje${icon("chevron")}</a>
     </header>
 
     <div class="body-layout">

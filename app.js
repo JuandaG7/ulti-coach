@@ -8,19 +8,21 @@ import * as video from "./views/video.js";
 import * as profile from "./views/profile.js";
 import * as blindaje from "./views/blindaje.js";
 import * as team from "./views/team.js";
+import * as plan from "./views/plan.js";
 import { profile as getProfile, plays, coaches } from "./store.js";
 
-const ROUTES = { inicio: home, cuerpo: body, blindaje, pruebas: tests, video, equipo: team, perfil: profile };
+const ROUTES = { inicio: home, plan, cuerpo: body, blindaje, pruebas: tests, video, equipo: team, perfil: profile };
 
-// Pestañas según el rol (máximo 5). En "ambos", Video se abre desde Pruebas para dejar lugar a Equipo.
+// Pestañas según el rol (máximo 5). Blindaje se abre desde Inicio, Cuerpo y Plan; en "ambos",
+// Video se abre desde Pruebas para dejar lugar a Equipo.
 const TAB_INFO = {
-  inicio: ["home", "Inicio"], cuerpo: ["body", "Cuerpo"], blindaje: ["shield", "Blindaje"],
+  inicio: ["home", "Inicio"], plan: ["calendar", "Plan"], cuerpo: ["body", "Cuerpo"], blindaje: ["shield", "Blindaje"],
   pruebas: ["timer", "Pruebas"], video: ["video", "Video"], equipo: ["users", "Equipo"],
 };
 function tabsForRole() {
   if (!plays()) return ["equipo", "pruebas"];
-  if (coaches()) return ["inicio", "cuerpo", "blindaje", "pruebas", "equipo"];
-  return ["inicio", "cuerpo", "blindaje", "pruebas", "video"];
+  if (coaches()) return ["inicio", "plan", "cuerpo", "pruebas", "equipo"];
+  return ["inicio", "plan", "cuerpo", "pruebas", "video"];
 }
 function renderTabbar() {
   document.querySelector(".tabbar").innerHTML = tabsForRole()
@@ -55,7 +57,7 @@ function route() {
     [name, param] = ["perfil", "bienvenida"];
   }
   // Un entrenador que no juega no tiene vistas personales: su inicio es Equipo.
-  const personal = ["inicio", "cuerpo", "blindaje", "video"];
+  const personal = ["inicio", "plan", "cuerpo", "blindaje", "video"];
   const defaultTab = plays() ? "inicio" : "equipo";
   const next = ROUTES[name] && (plays() || !personal.includes(name)) ? name : defaultTab;
   if (next !== name && getProfile()) history.replaceState(null, "", `#${next}`);
@@ -69,7 +71,8 @@ function route() {
   document.body.classList.toggle("onboarding", !getProfile());
   renderTabbar();
   document.querySelectorAll("[data-tab]").forEach((a) => {
-    if (a.dataset.tab === next) a.setAttribute("aria-current", "page");
+    // Blindaje no tiene pestaña propia: se ve como parte de Cuerpo.
+    if (a.dataset.tab === (next === "blindaje" ? "cuerpo" : next)) a.setAttribute("aria-current", "page");
     else a.removeAttribute("aria-current");
   });
   if (changedTab) window.scrollTo(0, 0);

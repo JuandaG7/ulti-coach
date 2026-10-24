@@ -38,6 +38,8 @@ Luego abre http://localhost:8765
 | `data/muscles.js` | Músculos, importancia en ultimate, pruebas que los califican y ejercicios |
 | `data/body-map.js` | Polígonos del mapa corporal (react-body-highlighter, MIT) |
 | `scoring.js` | Cálculo de puntajes y prioridades |
+| `plan.js`, `views/plan.js` | Plan semanal (fuerza, potencia, blindaje, lanzamiento) armado con tus datos |
+| `data/return.js` | Vuelta tras lesión: 5 etapas, ejercicios por zona. **Ajusta aquí los criterios** (en `plan.js`) |
 | `store.js` | Guarda las mediciones en el dispositivo |
 | `pose.js`, `metrics.js` | Análisis de video con MediaPipe |
 | `forehand.js` | Métricas del forehand (cadena cinética, pivot, peso) y rango pro |

@@ -818,3 +818,57 @@ progress { width: 100%; margin-top: 8px; accent-color: var(--accent); }
 .asym-pct { white-space: nowrap; font-weight: 600; font-size: 0.82rem; }
 .asym-pct.red { color: var(--bad); }
 .asym-pct.yellow { color: var(--warn); }
+
+/* ---------- Plan ---------- */
+.head-link { align-self: flex-start; margin-top: 4px; }
+.plan-settings { gap: 14px; }
+.plan-settings .field { display: grid; gap: 6px; }
+.plan-week { gap: 12px; }
+.plan-foot { display: flex; gap: 8px; align-items: flex-start; }
+.plan-foot .icon { width: 16px; height: 16px; flex: none; margin-top: 2px; }
+
+.plan-warmup summary, .session summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; list-style: none; }
+.plan-warmup summary::-webkit-details-marker, .session summary::-webkit-details-marker { display: none; }
+.plan-warmup .summary-label { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.95rem; }
+.plan-warmup .summary-label .icon { color: var(--warn); }
+.plan-warmup[open] > summary > .icon, .session[open] > summary > .icon { transform: rotate(180deg); }
+.plan-warmup .tips { margin: 12px 0 0; }
+
+.session-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.session-head > span:last-child { display: grid; min-width: 0; }
+.session-n { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 11px; background: var(--surface-3); border: 1px solid var(--border); font-weight: 700; font-size: 1.15rem; }
+.session-n .icon { width: 18px; height: 18px; }
+.session.done .session-n { background: var(--t3); color: var(--accent-ink); border-color: transparent; }
+.session.done .session-title { color: var(--muted); }
+.session-title { font-family: var(--font-display); font-weight: 700; font-size: 1.2rem; line-height: 1.15; }
+.session-body { display: grid; gap: 4px; margin-top: 8px; }
+.session-body .btn { margin-top: 12px; }
+.plan-block .subhead { margin: 14px 0 8px; }
+.plan-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.plan-items li { display: grid; gap: 4px; }
+.plan-drill { justify-self: start; display: inline-flex; align-items: center; gap: 2px; font-size: 0.9rem; padding: 8px 8px 8px 13px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); min-height: 40px; text-align: left; transition: background-color .15s, border-color .15s; }
+.plan-drill:active { background: var(--surface-3); }
+.plan-drill .icon { width: 14px; height: 14px; color: var(--muted); }
+.plan-why { display: inline-flex; align-items: center; gap: 6px; padding-left: 4px; font-size: 0.8rem; color: var(--muted); }
+.plan-why .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--tier); flex: none; }
+.plan-block.vuelta .subhead { color: var(--warn); }
+
+.plan-card { display: flex; align-items: center; gap: 14px; }
+.plan-card-icon { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 12px; background: var(--surface-3); color: var(--accent); }
+.plan-card-text { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.plan-card > .icon { color: var(--muted); }
+
+/* Vuelta tras lesión */
+.return-card { gap: 14px; box-shadow: inset 0 0 0 1px rgba(242, 196, 109, 0.35), var(--card-shadow); }
+.stage-track { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.stage-track li { height: 30px; border-radius: 9px; background: var(--surface-3); display: grid; place-items: center; color: var(--muted); font-size: 0.95rem; }
+.stage-track li.past { background: var(--t3); color: var(--accent-ink); }
+.stage-track li.now { background: var(--t2); color: #3d2603; font-weight: 700; }
+.criteria .subhead { margin: 0 0 6px; }
+.criteria ul { list-style: none; margin: 0 0 6px; padding: 0; display: grid; }
+.criteria li { display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--border); font-size: 0.9rem; }
+.crit-mark { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; }
+.crit-mark .icon { width: 14px; height: 14px; }
+.crit-mark.ok { background: var(--t3); color: var(--accent-ink); }
+.crit-mark.no { background: var(--t1); color: #3a1208; }
+.crit-mark.todo { border: 2px dashed var(--muted); }

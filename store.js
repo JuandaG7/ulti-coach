@@ -149,6 +149,22 @@ export function injuries() {
   return [...(state.profile?.injuries ?? [])].sort((a, b) => b.date.localeCompare(a.date));
 }
 
+// ---------- Plan ----------
+// planLog: sesiones del plan marcadas como hechas: { date, week, n }.
+
+export function planLog() {
+  return state.profile?.planLog ?? [];
+}
+
+export function toggleSession({ date, week, n }) {
+  const log = planLog();
+  const done = log.some((l) => l.week === week && l.n === n);
+  const next = done ? log.filter((l) => !(l.week === week && l.n === n)) : [...log, { date, week, n }].slice(-300);
+  state.profile = { ...state.profile, planLog: next };
+  save();
+  return !done;
+}
+
 export function saveInjury(injury) {
   const list = (state.profile.injuries ?? []).filter((i) => i.id !== injury.id);
   state.profile = { ...state.profile, injuries: [...list, { id: crypto.randomUUID(), ...injury }] };
