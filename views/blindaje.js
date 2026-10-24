@@ -85,16 +85,22 @@ function jointCard({ id, joint, score, injury, alerts }, i, mode) {
         </div>
 
         ${alerts.length ? `
-          <ul class="alerts">
-            ${alerts.map((a) => `
-              <li class="${asymmetryFlag(a.pct)}">
-                <button data-test="${a.testId}">
-                  ${icon("alert")}
-                  <span><strong>${TESTS_BY_ID[a.testId].name}:</strong> ${a.weak === "L" ? "izquierda" : "derecha"} ${a.pct} % más débil
-                  (I ${fmt(a.L, TESTS_BY_ID[a.testId].decimals)} · D ${fmt(a.R, TESTS_BY_ID[a.testId].decimals)})</span>
-                </button>
-              </li>`).join("")}
-          </ul>` : ""}
+          <div class="asym-box">
+            <p class="asym-head">${icon("alert")}<span>Un lado más débil que el otro</span></p>
+            <table class="asym-table">
+              <thead><tr><th>Prueba</th><th>Izq.</th><th>Der.</th><th>Dif.</th></tr></thead>
+              <tbody>${alerts.map((a) => {
+                const t = TESTS_BY_ID[a.testId];
+                return `
+                <tr>
+                  <td><button type="button" class="link-row" data-test="${a.testId}">${t.name}</button></td>
+                  <td class="num ${a.weak === "L" ? "weak" : ""}">${fmt(a.L, t.decimals)}</td>
+                  <td class="num ${a.weak === "R" ? "weak" : ""}">${fmt(a.R, t.decimals)}</td>
+                  <td><span class="asym-pct ${asymmetryFlag(a.pct)}">${a.weak === "L" ? "Izq." : "Der."} −${a.pct} %</span></td>
+                </tr>`;
+              }).join("")}</tbody>
+            </table>
+          </div>` : ""}
 
         <h3 class="subhead">Blindaje · ${mode === "gym" ? "gimnasio" : "casa"}</h3>
         ${drillChips(joint.drills[mode])}

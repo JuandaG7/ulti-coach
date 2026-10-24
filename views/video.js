@@ -86,7 +86,7 @@ function build() {
   el.innerHTML = `
     <header class="page-head">
       <h1 class="display">Video</h1>
-      <p class="muted small">Tu forehand contra jugadores pro. Graba de lado, con todo el cuerpo en el cuadro, el celular quieto y desde antes del armado.</p>
+      <p class="muted small">Tu forehand contra jugadores pro. Graba de lado, cuerpo entero, celular quieto.</p>
     </header>
 
     <section class="card">
@@ -94,7 +94,7 @@ function build() {
       <fieldset class="field">
         <legend>¿Cómo se ve el video?</legend>
         <div class="segmented wide">${speedRadios("my-speed")}</div>
-        <small class="muted">Si lo grabaste en cámara lenta y se reproduce lento, elige ×4 (120 fps) o ×8 (240 fps).</small>
+        <small class="muted">Cámara lenta: ×4 si es 120 fps, ×8 si es 240 fps.</small>
       </fieldset>
       <label class="btn primary block disabled" data-pick="mine">
         ${icon("video")} Analizar mi forehand
@@ -107,6 +107,8 @@ function build() {
 
     <div class="fh-result" hidden data-result>
       <div class="banner warn" hidden data-warn></div>
+      <section class="card" data-vs-pro></section>
+      <section class="card" data-focus hidden></section>
 
       <section class="card">
         <h2 class="section-title duo-title" data-duo-title>Tú vs. pro</h2>
@@ -170,8 +172,6 @@ function build() {
         <table class="chain-table" data-chain-rows></table>
       </section>
 
-      <section class="card" data-vs-pro></section>
-      <section class="card" data-focus hidden></section>
       <section class="card" data-consistency></section>
       <section class="card" data-own></section>
 
@@ -662,8 +662,8 @@ function paintDuo(pro) {
   $("[data-duo-sub]").innerHTML = !pro
     ? current?.video ? "Tu esqueleto, dibujado sobre tu video." : "Tu esqueleto (el video no se guarda)."
     : overlay
-      ? `Tu esqueleto (verde) y el de <strong>${name}</strong> (beige), uno encima del otro y alineados por la cadera. Donde se separan, ahí está la diferencia.`
-      : `A la derecha, el movimiento de <strong>${name}</strong>. Mostramos solo su esqueleto porque el video no se guarda. Los dos están sincronizados en el momento de soltar (0 ms).`;
+      ? `Tú (verde) y <strong>${name}</strong> (beige), alineados por la cadera. Donde se separan, ahí está la diferencia.`
+      : `Sincronizados en el momento de soltar. De <strong>${name}</strong> solo guardamos el esqueleto.`;
   $("[data-pro-name]").innerHTML = !pro
     ? ""
     : overlay
@@ -690,7 +690,7 @@ function vsProCard(rows, overall, usable) {
       </div>
     </div>
     <ul class="metric-list">${rows.map(({ m, value, band, score }) => metricRow(m, value, band, score)).join("")}</ul>
-    <p class="muted small">Estas métricas casi no dependen del ángulo de la cámara. Dentro del rango pro = 100 puntos; las tolerancias fuera del rango son estimaciones.</p>`;
+    <p class="muted small">Dentro del rango pro = 100 puntos. Las tolerancias fuera del rango son estimadas.</p>`;
 }
 
 function metricRow(m, value, band, score) {
@@ -717,9 +717,8 @@ function paintReleaseFix(clip, a) {
   const fps = a.quality.fps;
   $('[data-act="auto-release"]').hidden = !locked;
   $("[data-release-note]").textContent =
-    (locked ? "Suelta marcada por ti." : "Suelta automática (cuando la muñeca va más rápido).") +
-    " Si no es el cuadro donde el disco sale de la mano, ve a ese cuadro y márcalo." +
-    (fps ? ` Video a ${fps} cuadros por segundo reales.` : "");
+    (locked ? "Suelta marcada por ti" : "Suelta automática") + (fps ? ` · ${fps} fps` : "") +
+    ". ¿No es donde sale el disco? Ve a ese cuadro y márcalo.";
 }
 
 // ¿Qué tan repetibles son tus números? Sin esto, una diferencia con los pros puede ser solo ruido.
@@ -745,10 +744,10 @@ function consistencyCard(steady) {
   const noisy = METRICS.filter((m) => steady[m.id]?.level === "muy variable");
   return `
     <h2 class="section-title">¿Qué tan confiables son tus números?</h2>
-    <p class="muted small section-sub">Cuánto cambia cada métrica entre tus últimos ${Math.max(...ids.map((id) => steady[id].n))} videos. Mezcla lo que de verdad cambias entre lanzamientos y el error de medir con video: las dos cosas importan.</p>
+    <p class="muted small section-sub">Cuánto cambia cada métrica entre tus últimos ${Math.max(...ids.map((id) => steady[id].n))} videos.</p>
     <ul class="metric-list">${rows.join("")}</ul>
     ${noisy.length ? `<p class="small">${icon("alert")} ${capitalize(noisy.map((m) => m.name.toLowerCase()).join(", "))}: salta${noisy.length > 1 ? "n" : ""} mucho entre videos, así que no ${noisy.length > 1 ? "las" : "la"} usamos para decirte qué trabajar. Graba en cámara lenta y con la cámara siempre en el mismo lugar.</p>` : ""}
-    <p class="muted small">Umbrales estimados: estable = menos de un cuarto de la tolerancia de la métrica.</p>`;
+    `;
 }
 
 // Brecha más grande → qué trabajar, conectado con Cuerpo y los ejercicios.

@@ -48,7 +48,7 @@ export function render(root, selected) {
       </section>
 
       <section class="card detail-card">
-        ${selected ? detail(selected) : `<div class="detail-empty">${icon("body")}<p>Toca un músculo para ver su puntaje, por qué importa en ultimate y cómo mejorarlo.</p></div>`}
+        ${selected ? detail(selected) : `<div class="detail-empty">${icon("body")}<p>Toca un músculo para ver su puntaje y cómo mejorarlo.</p></div>`}
       </section>
     </div>
 
