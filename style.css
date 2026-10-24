@@ -16,13 +16,14 @@
   --accent-strong: #42966a;
   --accent-ink: #0c2a1f;
 
-  /* Niveles: verde que se aclara hasta el marfil "trofeo"
-     (validado: luminosidad monótona, contraste ≥2.6:1, un solo tono, apto daltónicos) */
+  /* Niveles: semáforo de cancha. Lo débil en coral, lo medio en ámbar, lo bueno en verde y el
+     Excelente en marfil con dorado. La luminosidad sube con el nivel y el nivel siempre va escrito,
+     así que también se lee sin distinguir rojo de verde. */
   --t-none: #1f3a30;
-  --t1: #2c6b4b; /* Mejorable */
-  --t2: #42966a; /* Decente */
-  --t3: #8cc7a0; /* Bueno */
-  --t4: #e3ecd0; /* Excelente */
+  --t1: #e8735a; /* Mejorable */
+  --t2: #edb04f; /* Decente */
+  --t3: #6bc38a; /* Bueno */
+  --t4: #f3ecdc; /* Excelente */
   /* Dorado: solo como recompensa del nivel Excelente */
   --gold: #e2c27e;
   --gold-deep: #a8781f;
@@ -81,8 +82,8 @@ h1, h2, h3, p { margin: 0; }
 
 /* Niveles: .tier-* define --tier (y la tinta para texto encima) */
 .tier-none { --tier: var(--t-none); --tier-ink: var(--muted); }
-.tier-t1 { --tier: var(--t1); --tier-ink: #ffffff; }
-.tier-t2 { --tier: var(--t2); --tier-ink: #06140f; }
+.tier-t1 { --tier: var(--t1); --tier-ink: #3a1208; }
+.tier-t2 { --tier: var(--t2); --tier-ink: #3d2603; }
 .tier-t3 { --tier: var(--t3); --tier-ink: var(--accent-ink); }
 .tier-t4 { --tier: var(--t4); --tier-ink: var(--accent-ink); }
 
@@ -224,7 +225,7 @@ section { display: flex; flex-direction: column; gap: 16px; }
 .focus:hover { border-color: var(--accent); }
 .focus:active { transform: scale(0.985); }
 .focus-head { display: flex; align-items: center; gap: 12px; }
-.focus-rank { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: var(--accent-strong); color: #06140f; font-weight: 700; font-size: 1.15rem; }
+.focus-rank { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: var(--surface-3); color: var(--text); border: 1px solid var(--border); font-weight: 700; font-size: 1.15rem; }
 .focus-name { flex: 1; font-weight: 600; font-size: 1.1rem; }
 .focus p:not(.accent) { color: var(--text-2); }
 
@@ -706,10 +707,15 @@ progress { width: 100%; margin-top: 8px; accent-color: var(--accent); }
 .sync-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .tau { font-size: 1.15rem; }
 .btn[aria-pressed="true"] { background: var(--surface-3); color: var(--text); }
-.chain-chart { width: 100%; height: 170px; display: block; background: var(--bg); border-radius: var(--radius-sm); cursor: crosshair; }
-.chain-legend { justify-content: flex-start; }
-.chain-legend i.pro-tick { width: 3px; height: 12px; border-radius: 2px; background: var(--text-2); }
-.chain-text { display: inline-flex; gap: 8px; align-items: flex-start; color: var(--text-2); }
+.chain-chart { width: 100%; height: 190px; display: block; background: var(--bg); border-radius: var(--radius-sm); cursor: crosshair; }
+.chain-text { display: grid; grid-template-columns: auto 1fr; gap: 4px 8px; align-items: start; color: var(--text-2); }
+.chain-compare { grid-column: 2; }
+.chain-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.chain-table th { text-align: left; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 0 6px 6px; }
+.chain-table td { padding: 7px 6px; border-top: 1px solid var(--border); }
+.chain-table td.num { font-size: 1.05rem; white-space: nowrap; }
+.chain-table td:first-child, .chain-table th:first-child { width: 30px; padding-left: 0; }
+.chain-num { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; color: #06140f; font-weight: 700; font-size: 0.8rem; }
 .chain-text .icon { width: 18px; height: 18px; margin-top: 2px; color: var(--accent); }
 .vs-head { display: flex; align-items: center; gap: 16px; }
 .vs-head > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }

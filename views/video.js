@@ -24,11 +24,12 @@ const SPEEDS = [
 // Ventana que se reproduce alrededor de la suelta (segundos reales).
 const TAU = { min: -0.8, max: 0.4 };
 // Colores de la cadena: del verde oscuro (cadera) al marfil (muñeca), la escala de niveles de la app.
+// Un color distinto por parte del cuerpo (fuera de los colores de nivel, para no confundir).
 const CHAIN = [
-  { key: "hip", name: "Cadera", color: "#2c6b4b" },
-  { key: "trunk", name: "Hombros", color: "#42966a" },
-  { key: "elbow", name: "Codo", color: "#8cc7a0" },
-  { key: "wrist", name: "Muñeca", color: "#e3ecd0" },
+  { key: "hip", name: "Cadera", color: "#6fa8f5" },
+  { key: "trunk", name: "Hombros", color: "#b48cf0" },
+  { key: "elbow", name: "Codo", color: "#f28cb8" },
+  { key: "wrist", name: "Muñeca", color: "#f3ecdc" },
 ];
 
 // Dónde encontrar lanzamientos de pros. Son búsquedas (no videos fijos): siempre traen resultados actuales.
@@ -163,10 +164,10 @@ function build() {
 
       <section class="card">
         <h2 class="section-title">Cadena de lanzamiento</h2>
-        <p class="muted small section-sub">Cada línea es la velocidad de una parte del cuerpo. En un buen forehand los picos van en orden, como un látigo.</p>
-        <canvas class="chain-chart" data-chain></canvas>
-        <ul class="legend chain-legend">${CHAIN.map((c) => `<li><i style="background:${c.color}"></i>${c.name}</li>`).join("")}<li><i class="pro-tick"></i>Pico pro (mediana)</li></ul>
+        <p class="muted small section-sub">Cuándo acelera cada parte del cuerpo. El punto marca su máxima velocidad: en un buen forehand van en orden de izquierda a derecha, <strong>1 → 2 → 3 → 4</strong>, como un látigo.</p>
         <p class="small" data-chain-text></p>
+        <canvas class="chain-chart" data-chain></canvas>
+        <table class="chain-table" data-chain-rows></table>
       </section>
 
       <section class="card" data-vs-pro></section>
@@ -806,16 +807,58 @@ function ownCard(clip, a) {
     <ul class="metric-list">${rows.join("")}</ul>`;
 }
 
+// Mediana de los picos de los pros (ms respecto a la suelta), por parte del cuerpo.
+function proPeakMedians() {
+  const all = validPros().map((c) => analysisOf(c).peaks);
+  return Object.fromEntries(CHAIN.map((c) => {
+    const vals = all.map((p) => p[c.key]).filter((v) => v != null).sort((x, y) => x - y);
+    return [c.key, vals.length ? vals[Math.floor(vals.length / 2)] : null];
+  }));
+}
+
+const fmtMs = (v) => (v == null ? "–" : Math.round(v) === 0 ? "0 ms" : `${Math.round(v) < 0 ? "−" : "+"}${Math.abs(Math.round(v))} ms`);
+const NAME_THE = { hip: "la cadera", trunk: "los hombros", elbow: "el codo", wrist: "la muñeca" };
+
+// La gráfica en palabras: si el orden está bien, y qué tan antes gira tu cadera comparada con los pros.
 function paintChainText(a) {
-  const { peaks, metrics } = a;
-  const order = metrics.chainOrder;
-  const fmtMs = (v) => (v == null ? "–" : `${Math.round(v) < 0 ? "−" : ""}${Math.abs(Math.round(v))} ms`);
-  const text =
-    order == null
-      ? "No pudimos medir la cadena en este video."
-      : order === 3
-        ? `${icon("check")} Orden correcto: cadera (${fmtMs(peaks.hip)}) → hombros (${fmtMs(peaks.trunk)}) → codo (${fmtMs(peaks.elbow)}) → muñeca (0 ms).`
-        : `${icon("alert")} ${order} de 3 eslabones en orden: cadera ${fmtMs(peaks.hip)}, hombros ${fmtMs(peaks.trunk)}, codo ${fmtMs(peaks.elbow)}, muñeca 0 ms.`;
+  const { peaks, metrics, quality } = a;
+  const pro = proPeakMedians();
+  const hasPro = validPros().length > 0;
+  const tol = Math.max(10, quality.fps ? 1000 / quality.fps : 10);
+
+  // Tabla: tus tiempos y los de los pros, con el número de orden de la gráfica.
+  $("[data-chain-rows]").innerHTML = `
+    <thead><tr><th></th><th>Acelera al máximo</th><th>Tú</th>${hasPro ? "<th>Pros</th>" : ""}</tr></thead>
+    <tbody>${CHAIN.map((c, i) => `
+      <tr>
+        <td><span class="chain-num" style="background:${c.color}">${i + 1}</span></td>
+        <td>${c.name}</td>
+        <td class="num">${fmtMs(c.key === "wrist" ? 0 : peaks[c.key])}</td>
+        ${hasPro ? `<td class="num muted">${fmtMs(c.key === "wrist" ? 0 : pro[c.key])}</td>` : ""}
+      </tr>`).join("")}
+    </tbody>`;
+
+  let text;
+  if (metrics.chainOrder == null) {
+    text = `${icon("alert")}<span>No pudimos medir la cadena en este video.</span>`;
+  } else if (metrics.chainOrder === 3) {
+    text = `${icon("check")}<span><strong>Orden correcto.</strong> Cada parte acelera después de la anterior: la energía viaja de la cadera a la mano.</span>`;
+  } else {
+    // Primer eslabón fuera de orden, dicho en palabras.
+    const keys = ["hip", "trunk", "elbow", "wrist"];
+    const at = (k) => (k === "wrist" ? 0 : peaks[k]);
+    const i = keys.findIndex((k, j) => j < 3 && at(k) > at(keys[j + 1]) + tol);
+    const late = keys[i];
+    const early = keys[i + 1];
+    text = `${icon("alert")}<span><strong>${metrics.chainOrder} de 3 pasos en orden.</strong> ${capitalize(NAME_THE[early])} ${early === "trunk" ? "aceleran" : "acelera"} antes que ${NAME_THE[late]}: ${early === "trunk" ? "el giro no arranca desde abajo" : "el brazo se adelanta al cuerpo"} y pierdes fuerza.</span>`;
+  }
+  // Comparación de la cadera con los pros (lo que más define un forehand con potencia).
+  if (hasPro && peaks.hip != null && pro.hip != null) {
+    const me = -peaks.hip;
+    const them = -pro.hip;
+    const tip = me < them * 0.7 ? " Estás lanzando más con el brazo: gira la cadera antes." : me > them * 1.3 ? " Tu cadera gira muy pronto: la energía se pierde antes de llegar al brazo." : " Vas en el tiempo de los pros.";
+    text += `<span class="chain-compare">Tu cadera acelera <strong class="num">${Math.round(me)} ms</strong> antes de soltar; los pros, <strong class="num">${Math.round(them)} ms</strong>.${tip}</span>`;
+  }
   $("[data-chain-text]").innerHTML = `<span class="chain-text">${text}</span>`;
 }
 
@@ -982,7 +1025,7 @@ function draw() {
 }
 
 function chainAxis(width) {
-  return { x0: -0.6, x1: 0.15, pad: Math.min(14, width * 0.04) };
+  return { x0: -0.4, x1: 0.12, pad: Math.min(14, width * 0.04) };
 }
 
 function drawChain() {
@@ -996,7 +1039,7 @@ function drawChain() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, W, H);
   const { x0, x1, pad } = chainAxis(W);
-  const top = 18;
+  const top = 26;
   const bottom = 22;
   const x = (t) => pad + ((t - x0) / (x1 - x0)) * (W - 2 * pad);
   const y = (v) => H - bottom - Math.max(0, Math.min(1.1, v)) / 1.1 * (H - top - bottom);
@@ -1012,23 +1055,35 @@ function drawChain() {
   ctx.font = "11px Barlow, sans-serif";
   ctx.textAlign = "center";
   ctx.fillText("suelta", x(0), H - 6);
-  ctx.textAlign = "left";
-  ctx.fillText("−600 ms", pad, H - 6);
+  ctx.textAlign = "center";
+  for (const ms of [-300, -200, -100]) {
+    ctx.fillText(ms === -300 ? "−300 ms" : `−${-ms}`, x(ms / 1000), H - 6);
+    ctx.strokeStyle = "rgba(147, 169, 155, 0.15)";
+    ctx.beginPath();
+    ctx.moveTo(x(ms / 1000), top);
+    ctx.lineTo(x(ms / 1000), H - bottom);
+    ctx.stroke();
+  }
 
-  // Picos pro (mediana) como marcas arriba
-  const proPeaks = validPros().map((c) => analysisOf(c).peaks);
-  if (proPeaks.length) {
-    for (const c of CHAIN.slice(0, 3)) {
-      const vals = proPeaks.map((p) => p[c.key]).filter((v) => v != null).sort((p, q) => p - q);
-      if (!vals.length) continue;
-      const med = vals[Math.floor(vals.length / 2)] / 1000;
+  // Picos pro (mediana): círculos huecos con su número, en la franja de arriba
+  const pro = proPeakMedians();
+  if (validPros().length) {
+    ctx.font = "600 10px Barlow, sans-serif";
+    ctx.fillStyle = "#93a99b";
+    ctx.textAlign = "left";
+    ctx.fillText("pros", pad, 14);
+    ctx.textAlign = "center";
+    CHAIN.forEach((c, i) => {
+      const v = c.key === "wrist" ? 0 : pro[c.key];
+      if (v == null) return;
       ctx.strokeStyle = c.color;
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.moveTo(x(med), 2);
-      ctx.lineTo(x(med), 12);
+      ctx.arc(x(v / 1000), 11, 6, 0, Math.PI * 2);
       ctx.stroke();
-    }
+      ctx.fillStyle = c.color;
+      ctx.fillText(i + 1, x(v / 1000), 14.5);
+    });
   }
 
   // Curvas
@@ -1046,14 +1101,34 @@ function drawChain() {
       started = true;
     });
     ctx.stroke();
-    const peak = c.key === "wrist" ? 0 : a.peaks[c.key];
-    if (peak != null) {
-      ctx.fillStyle = c.color;
-      ctx.beginPath();
-      ctx.arc(x(peak / 1000), y(1), 4, 0, Math.PI * 2);
-      ctx.fill();
-    }
   }
+  // Tus picos: punto con el número de orden (encima de las curvas, para que siempre se lean)
+  ctx.font = "700 11px Barlow, sans-serif";
+  ctx.textAlign = "center";
+  // Si dos picos caen muy juntos, el segundo baja un escalón (con una rayita a su pico) para que no se tapen.
+  const placed = [];
+  CHAIN.forEach((c, i) => {
+    const peak = c.key === "wrist" ? 0 : a.peaks[c.key];
+    if (peak == null) return;
+    const px = x(peak / 1000);
+    let py = y(1);
+    while (placed.some((q) => Math.abs(q.x - px) < 17 && Math.abs(q.y - py) < 17)) py += 18;
+    if (py !== y(1)) {
+      ctx.strokeStyle = c.color;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(px, y(1));
+      ctx.stroke();
+    }
+    placed.push({ x: px, y: py });
+    ctx.fillStyle = c.color;
+    ctx.beginPath();
+    ctx.arc(px, py, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#06140f";
+    ctx.fillText(i + 1, px, py + 4);
+  });
 
   // Momento actual
   if (tau >= x0 && tau <= x1) {
