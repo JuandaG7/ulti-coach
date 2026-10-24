@@ -3,8 +3,8 @@ import { FRONT, BACK } from "../data/body-map.js";
 import { MUSCLES, SVG_TO_MUSCLE } from "../data/muscles.js";
 import { TESTS_BY_ID } from "../data/tests.js";
 import { latest, profile } from "../store.js";
-import { muscleScore, testScore, level, nextLevel, priorities, target, muscleImportance, LEVELS } from "../scoring.js";
-import { ring, bar, icon, fmt, tierClass, levelChip, summary } from "../ui.js";
+import { muscleScore, testScore, level, nextLevel, priorities, target, muscleImportance, LEVELS, jointWarnings } from "../scoring.js";
+import { ring, bar, icon, fmt, tierClass, levelChip, summary, bodySwitch } from "../ui.js";
 import { openTestSheet } from "./test-sheet.js";
 import { drillChips, bindDrills } from "./exercise-sheet.js";
 
@@ -31,8 +31,8 @@ export function render(root, selected) {
   root.innerHTML = `
     <header class="page-head">
       <h1 class="display">Cuerpo</h1>
+      ${bodySwitch("musculos", jointWarnings())}
       <p class="muted small">Cada músculo se califica con las pruebas que lo miden, contra el nivel Excelente.</p>
-      <a class="btn secondary small-btn head-link" href="#blindaje">${icon("shield")} Articulaciones: Blindaje${icon("chevron")}</a>
     </header>
 
     <div class="body-layout">

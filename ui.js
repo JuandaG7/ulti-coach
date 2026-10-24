@@ -40,6 +40,17 @@ export function icon(name, cls = "") {
   return `<svg class="icon ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]}</svg>`;
 }
 
+// Selector de Cuerpo: músculos (mapa) o blindaje (articulaciones). warnings: zonas que piden atención.
+export function bodySwitch(current, warnings = 0) {
+  const tab = (id, href, label, extra = "") =>
+    `<a href="${href}" role="tab" aria-selected="${current === id}">${label}${extra}</a>`;
+  return `
+    <nav class="segmented wide body-switch" role="tablist" aria-label="Cuerpo">
+      ${tab("musculos", "#cuerpo", "Músculos")}
+      ${tab("blindaje", "#blindaje", `${icon("shield")} Blindaje`, warnings ? `<span class="alert-dot num" aria-label="${warnings} zonas con alerta">${warnings}</span>` : "")}
+    </nav>`;
+}
+
 export function tierClass(score) {
   return `tier-${level(score).id}`;
 }

@@ -10,6 +10,7 @@ import * as blindaje from "./views/blindaje.js";
 import * as team from "./views/team.js";
 import * as plan from "./views/plan.js";
 import { profile as getProfile, plays, coaches } from "./store.js";
+import { jointWarnings } from "./scoring.js";
 
 const ROUTES = { inicio: home, plan, cuerpo: body, blindaje, pruebas: tests, video, equipo: team, perfil: profile };
 
@@ -25,8 +26,10 @@ function tabsForRole() {
   return ["inicio", "plan", "cuerpo", "pruebas", "video"];
 }
 function renderTabbar() {
+  // Punto de alerta en Cuerpo si el blindaje pide atención (lesión activa, asimetría roja o dolor).
+  const warn = plays() && getProfile() ? jointWarnings() : 0;
   document.querySelector(".tabbar").innerHTML = tabsForRole()
-    .map((t) => `<a href="#${t}" data-tab="${t}">${icon(TAB_INFO[t][0])}<span>${TAB_INFO[t][1]}</span></a>`)
+    .map((t) => `<a href="#${t}" data-tab="${t}">${icon(TAB_INFO[t][0])}<span>${TAB_INFO[t][1]}</span>${t === "cuerpo" && warn ? `<i class="tab-dot" aria-label="Blindaje con alertas"></i>` : ""}</a>`)
     .join("");
 }
 const view = document.getElementById("view");

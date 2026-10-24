@@ -3,8 +3,8 @@
 import { JOINTS, DIMENSIONS, SIDES, sidePhrase } from "../data/joints.js";
 import { TESTS_BY_ID } from "../data/tests.js";
 import * as store from "../store.js";
-import { jointPriorities, jointDimensions, asymmetryFlag, latestPains } from "../scoring.js";
-import { ring, bar, icon, levelChip, fmt, fmtDate, today, summary, lessButton, exclusive } from "../ui.js";
+import { jointPriorities, jointDimensions, asymmetryFlag, latestPains, jointWarnings } from "../scoring.js";
+import { ring, bar, icon, levelChip, fmt, fmtDate, today, summary, lessButton, exclusive, bodySwitch } from "../ui.js";
 import { openTestSheet } from "./test-sheet.js";
 import { drillChips, bindDrills } from "./exercise-sheet.js";
 import { openSheet, closeSheet } from "./sheet.js";
@@ -15,8 +15,9 @@ export function render(root) {
 
   root.innerHTML = `
     <header class="page-head">
-      <h1 class="display">Blindaje</h1>
-      <p class="muted small">Las zonas que más se lesionan en ultimate, de la más vulnerable a la más fuerte. Toca una para ver qué hacer.</p>
+      <h1 class="display">Cuerpo</h1>
+      ${bodySwitch("blindaje", jointWarnings())}
+      <p class="muted small">Las articulaciones que más se lesionan en ultimate, de la más vulnerable a la más fuerte. Toca una para ver qué hacer.</p>
     </header>
 
     ${active.map((i) => `

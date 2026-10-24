@@ -210,6 +210,12 @@ export function jointInjury(jointId) {
   return recent ? { ...recent, weight: 1.3 } : null;
 }
 
+// Zonas que piden atención: lesión activa, diferencia fuerte entre lados (roja) o dolor ≥ 4 esta semana.
+// Se usa para el punto de alerta en la pestaña Cuerpo y en el selector Músculos | Articulaciones.
+export function jointWarnings() {
+  return jointPriorities().filter((j) => j.injury?.status === "activa" || j.alerts.some((a) => asymmetryFlag(a.pct) === "red") || j.pain >= 4).length;
+}
+
 export function jointPriorities() {
   return Object.entries(JOINTS)
     .map(([id, j]) => {

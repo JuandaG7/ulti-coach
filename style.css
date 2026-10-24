@@ -820,7 +820,6 @@ progress { width: 100%; margin-top: 8px; accent-color: var(--accent); }
 .asym-pct.yellow { color: var(--warn); }
 
 /* ---------- Plan ---------- */
-.head-link { align-self: flex-start; margin-top: 4px; }
 .plan-settings { gap: 14px; }
 .plan-settings .field { display: grid; gap: 6px; }
 .plan-week { gap: 12px; }
@@ -872,3 +871,12 @@ progress { width: 100%; margin-top: 8px; accent-color: var(--accent); }
 .crit-mark.ok { background: var(--t3); color: var(--accent-ink); }
 .crit-mark.no { background: var(--t1); color: #3a1208; }
 .crit-mark.todo { border: 2px dashed var(--muted); }
+
+/* Cuerpo: selector Músculos | Blindaje (los dos a la vista) y alertas */
+.body-switch { margin: 6px 0 2px; }
+.body-switch a { display: flex; align-items: center; justify-content: center; gap: 6px; flex: 1; min-height: 44px; border-radius: 10px; font-weight: 600; color: var(--muted); transition: background-color .2s, color .2s; }
+.body-switch a[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
+.body-switch .icon { width: 17px; height: 17px; }
+.alert-dot { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 99px; background: var(--t1); color: #3a1208; font-size: 0.8rem; font-weight: 700; }
+.tabbar a { position: relative; }
+.tab-dot { position: absolute; top: 6px; right: calc(50% - 18px); width: 9px; height: 9px; border-radius: 50%; background: var(--t1); box-shadow: 0 0 0 2px var(--bg); }
