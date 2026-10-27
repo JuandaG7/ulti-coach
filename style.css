@@ -880,3 +880,13 @@ progress { width: 100%; margin-top: 8px; accent-color: var(--accent); }
 .alert-dot { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 99px; background: var(--t1); color: #3a1208; font-size: 0.8rem; font-weight: 700; }
 .tabbar a { position: relative; }
 .tab-dot { position: absolute; top: 6px; right: calc(50% - 18px); width: 9px; height: 9px; border-radius: 50%; background: var(--t1); box-shadow: 0 0 0 2px var(--bg); }
+
+/* Hoja de prueba: cómo se mide, paso a paso */
+.howto { display: grid; gap: 8px; }
+.howto-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 6px; }
+.howto-need { margin: 0; padding-left: 18px; display: grid; gap: 2px; color: var(--text-2); font-size: 0.92rem; }
+.howto-steps { margin: 0; padding: 0; list-style: none; counter-reset: step; display: grid; gap: 10px; }
+.howto-steps li { counter-increment: step; display: grid; grid-template-columns: 26px 1fr; gap: 10px; font-size: 0.95rem; line-height: 1.45; }
+.howto-steps li::before { content: counter(step); display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--surface-3); border: 1px solid var(--border); font-family: var(--font-display); font-weight: 700; font-size: 0.9rem; color: var(--text); }
+.howto-record { display: flex; gap: 8px; align-items: flex-start; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); font-size: 0.92rem; margin-top: 4px; }
+.howto-record .icon { width: 16px; height: 16px; flex: none; margin-top: 3px; color: var(--accent); }

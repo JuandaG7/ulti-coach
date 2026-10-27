@@ -7,6 +7,7 @@ import { testScore, target, isImprovement, level, snapshot, asymmetry, asymmetry
 import { openSheet } from "./sheet.js";
 import { openJumpVideo } from "./jump-video.js";
 import { WARMUP, isMaxEffort, zonesForTest } from "../data/safety.js";
+import { PROTOCOLS } from "../data/protocols.js";
 import { JOINTS, SIDES, sidePhrase } from "../data/joints.js";
 import { icon, fmt, fmtDate, today, historyChart, levelChip, tierClass, toast, summary, parseNum } from "../ui.js";
 
@@ -73,8 +74,8 @@ function render(root, testId) {
 
     <div class="sheet-sections">
       <details class="protocol" ${list.length ? "" : "open"}>
-        ${summary("Cómo se hace")}
-        <p>${test.how}</p>
+        ${summary("Cómo se mide")}
+        ${protocol(test)}
         <a class="btn secondary block video-btn" href="https://www.youtube.com/results?search_query=${encodeURIComponent(test.video)}" target="_blank" rel="noopener">${icon("video")} Ver video en YouTube</a>
       </details>
 
@@ -299,6 +300,21 @@ function announce(testId, test, value, before, after) {
 }
 
 // ---------- Cronómetros ----------
+// Instructivo paso a paso (data/protocols.js); si una prueba no lo tiene, el resumen corto.
+function protocol(test) {
+  const p = PROTOCOLS[test.id];
+  if (!p) return `<p>${test.how}</p>`;
+  return `
+    <div class="howto">
+      <p class="howto-label">Necesitas</p>
+      <ul class="howto-need">${p.need.map((n) => `<li>${n}</li>`).join("")}</ul>
+      <p class="howto-label">Pasos</p>
+      <ol class="howto-steps">${p.steps.map((st) => `<li>${st}</li>`).join("")}</ol>
+      <p class="howto-record">${icon("edit")}<span><strong>Qué anotas:</strong> ${p.record}</span></p>
+      <p class="muted small">${test.how}</p>
+    </div>`;
+}
+
 // hold: 3-2-1 y cuenta hacia arriba. reactive: flecha al azar tras una espera aleatoria.
 // interval: sprints con salida fija cada `rest` segundos. Todos llenan el siguiente campo vacío.
 
