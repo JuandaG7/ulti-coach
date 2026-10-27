@@ -4,7 +4,9 @@
 // Regla para que tus mediciones sirvan: mídete siempre igual (mismo lugar, superficie, calzado,
 // calentamiento y forma de cronometrar). Cambiar el método cambia el número aunque tú no hayas cambiado.
 
-const LEVEL_APP = "Abre la app Medidas del iPhone → pestaña Nivel. Pon el borde del celular sobre el segmento indicado: el número grande es el ángulo.";
+// Pruebas de ángulo: se miden con el medidor de la app (views/angle-meter.js), que pone el cero en la
+// posición inicial y toma la medida sola.
+const METER = "Toca «Medir con el celular» (arriba) y sigue la voz: en la posición inicial la app pone el cero; al llegar al final y quedarte quieto, toma la medida. Luego el otro lado.";
 const HAND_TIMER = "Un compañero con el cronómetro del celular. Arranca cuando tu primer pie se despega del piso (no con la voz) y para cuando tu pecho cruza la línea. Siempre la misma persona, para que el error sea el mismo.";
 
 export const PROTOCOLS = {
@@ -320,55 +322,50 @@ export const PROTOCOLS = {
     record: "Centímetros de cada lado (por ejemplo 9.5).",
   },
   aslr: {
-    need: ["El piso", "El iPhone (app Medidas)"],
+    need: ["El piso", "Tu celular", "Una media o banda para sujetar el celular (o alguien que lo sostenga)"],
     steps: [
+      METER,
       "Boca arriba, las dos piernas estiradas.",
       "Sube una pierna estirada lo más alto posible sin ayuda de las manos; la otra queda pegada al piso.",
       "Mantén la rodilla estirada arriba.",
-      `${LEVEL_APP} Apóyalo en la espinilla de la pierna levantada.`,
-      "Los dos lados.",
     ],
     record: "Grados de cada lado.",
   },
   hipIR: {
-    need: ["Una mesa o cama alta", "El iPhone (app Medidas)"],
+    need: ["Una mesa o cama alta", "Tu celular", "Una media o banda para sujetarlo a la espinilla"],
     steps: [
+      METER,
       "Sentado al borde de la mesa, rodillas dobladas a 90° y muslos quietos.",
       "Gira el pie hacia AFUERA, como un péndulo: la cadera rota hacia adentro. El muslo no se mueve.",
-      `${LEVEL_APP} Apóyalo en la espinilla: anota cuánto se separó de la vertical.`,
-      "Los dos lados.",
     ],
     record: "Grados de cada lado.",
   },
   thoracicRot: {
-    need: ["El piso", "El iPhone (app Medidas)"],
+    need: ["El piso", "Tu celular", "Una media o banda para sujetar el celular (o alguien que lo sostenga)"],
     steps: [
+      METER,
       "En cuatro apoyos y siéntate sobre los talones: esto bloquea la zona lumbar.",
       "Pon una mano detrás de la cabeza.",
       "Gira ese codo hacia el techo lo más que puedas, sin despegar los glúteos de los talones.",
-      `${LEVEL_APP} Que alguien lo apoye entre tus hombros (a lo largo de la línea de los hombros).`,
-      "Los dos lados.",
     ],
     record: "Grados de cada lado.",
   },
   shoulderER: {
-    need: ["El piso", "El iPhone (app Medidas)", "Un compañero que lo mida"],
+    need: ["El piso", "Tu celular", "Un compañero que sostenga el celular"],
     steps: [
+      METER,
       "Boca arriba, brazo a 90° del cuerpo y codo doblado a 90° (la mano apunta al techo).",
       "Deja caer la mano hacia atrás, hacia la cabeza, sin arquear la espalda.",
-      `${LEVEL_APP} Que tu compañero lo apoye en el antebrazo.`,
-      "Los dos lados.",
     ],
     record: "Grados de cada lado.",
   },
   shoulderIR: {
-    need: ["El piso", "El iPhone (app Medidas)", "Un compañero que lo mida"],
+    need: ["El piso", "Tu celular", "Un compañero que sostenga el celular"],
     steps: [
+      METER,
       "Misma posición: boca arriba, brazo a 90° y codo a 90°.",
       "Tu compañero te sujeta el hombro contra el piso.",
       "Deja caer la mano hacia adelante, hacia los pies, sin que el hombro se levante.",
-      `${LEVEL_APP} Que lo apoye en el antebrazo.`,
-      "Los dos lados.",
     ],
     record: "Grados de cada lado.",
   },

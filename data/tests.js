@@ -19,7 +19,7 @@ export const CATEGORIES = [
   { id: "movilidad", name: "Movilidad", blurb: "Rango para frenar bajo, pivotear amplio y lanzar sin dolor." },
 ];
 
-const INCLINE = " Mide el ángulo con la app Medidas del iPhone (pestaña Nivel) apoyada en el segmento.";
+const INCLINE = " Mide el ángulo con «Medir con el celular»: la app pone el cero y toma la medida sola.";
 
 export const TESTS = [
   // ---------- Velocidad ----------
@@ -150,19 +150,19 @@ export const TESTS = [
   },
   {
     id: "aslr", cat: "movilidad", name: "Pierna estirada activa", unit: "°", decimals: 0, base: 60, elite: 90, kind: "bilateral",
-    how: "Boca arriba, sube una pierna estirada sin ayuda, con la otra pegada al piso." + INCLINE + " (En la espinilla.) Cada lado.",
+    how: "Boca arriba, sube una pierna estirada sin ayuda, con la otra pegada al piso." + INCLINE + " Cada lado.",
   },
   {
     id: "hipIR", cat: "movilidad", name: "Rotación interna de cadera", unit: "°", decimals: 0, base: 25, elite: 45, kind: "bilateral",
-    how: "Sentado al borde de una mesa, rodillas a 90°. Gira el pie hacia afuera (la cadera rota hacia adentro) sin mover el muslo." + INCLINE + " (En la espinilla, desde la vertical.) Cada lado.",
+    how: "Sentado al borde de una mesa, rodillas a 90°. Gira el pie hacia afuera (la cadera rota hacia adentro) sin mover el muslo." + INCLINE + " Cada lado.",
   },
   {
     id: "thoracicRot", cat: "movilidad", name: "Rotación torácica", unit: "°", decimals: 0, base: 35, elite: 55, kind: "bilateral",
-    how: "En cuatro apoyos, siéntate sobre los talones (bloquea la zona lumbar), una mano detrás de la cabeza y gira el codo hacia el techo." + INCLINE + " (Entre los hombros.) Cada lado. Clave para la potencia del lanzamiento.",
+    how: "En cuatro apoyos, siéntate sobre los talones (bloquea la zona lumbar), una mano detrás de la cabeza y gira el codo hacia el techo." + INCLINE + " Cada lado. Clave para la potencia del lanzamiento.",
   },
   {
     id: "shoulderER", cat: "movilidad", name: "Rotación externa de hombro", unit: "°", decimals: 0, base: 80, elite: 105, kind: "bilateral",
-    how: "Boca arriba, brazo a 90° del cuerpo y codo a 90°. Deja caer la mano hacia atrás sin arquear la espalda." + INCLINE + " (En el antebrazo.) Cada lado.",
+    how: "Boca arriba, brazo a 90° del cuerpo y codo a 90°. Deja caer la mano hacia atrás sin arquear la espalda." + INCLINE + " Cada lado.",
   },
   {
     id: "shoulderIR", cat: "movilidad", name: "Rotación interna de hombro", unit: "°", decimals: 0, base: 40, elite: 65, kind: "bilateral",

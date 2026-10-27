@@ -890,3 +890,12 @@ progress { width: 100%; margin-top: 8px; accent-color: var(--accent); }
 .howto-steps li::before { content: counter(step); display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--surface-3); border: 1px solid var(--border); font-family: var(--font-display); font-weight: 700; font-size: 0.9rem; color: var(--text); }
 .howto-record { display: flex; gap: 8px; align-items: flex-start; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); font-size: 0.92rem; margin-top: 4px; }
 .howto-record .icon { width: 16px; height: 16px; flex: none; margin-top: 3px; color: var(--accent); }
+
+/* Medidor de ángulos con el celular */
+.angle-meter { display: grid; gap: 12px; }
+.angle-live { font-size: 4.5rem; font-weight: 700; line-height: 1; text-align: center; color: var(--t4); margin: 8px 0 0; }
+.angle-step { text-align: center; font-size: 1rem; line-height: 1.45; min-height: 2.9em; }
+.angle-sides { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.angle-sides li { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 14px; border-radius: 12px; background: var(--surface-2); color: var(--text-2); }
+.angle-sides .num { font-size: 1.4rem; font-weight: 700; color: var(--text); }
+.angle-meter .link { justify-self: center; }
