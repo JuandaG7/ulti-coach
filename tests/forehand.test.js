@@ -1,6 +1,6 @@
 // Pruebas del análisis del forehand con lanzamientos sintéticos: un esqueleto armado a mano
 // donde sabemos la respuesta (cuándo gira la cadera, cuándo suelta, etc.).
-import { analyzeForehand, trimAroundRelease, moveRelease, consistency, proBand, scoreVsPro } from "../forehand.js";
+import { analyzeForehand, trimAroundRelease, moveRelease, consistency, proBand, scoreVsPro, compareOutcomes } from "../forehand.js";
 
 // Función de distribución normal acumulada (aprox. de erf): convierte un pico de velocidad
 // con forma de campana en una posición que avanza suave.
@@ -155,6 +155,34 @@ test("Rango pro y puntaje: dentro del rango = 100, lejos = baja", () => {
   ok(band.lo === 60 && band.hi === 100, `rango ${band.lo}–${band.hi}`);
   ok(scoreVsPro("hipLead", 70, band) === 100, "dentro del rango no dio 100");
   ok(scoreVsPro("hipLead", 0, band) === 50, `a 60 ms del rango dio ${scoreVsPro("hipLead", 0, band)}`);
+});
+
+test("Buenos vs malos: encuentra que la diferencia está en la cadera", () => {
+  const throwOf = (hip, seed, outcome) => ({ outcome, analysis: analyzeForehand(syntheticThrow({ hip, seed, noise: 0.004 })) });
+  const items = [
+    ...[-0.13, -0.12, -0.12, -0.11].map((h, i) => throwOf(h, i + 1, "bien")),
+    ...[-0.05, -0.06, -0.04, -0.05].map((h, i) => throwOf(h, i + 11, i % 2 ? "se_fue" : "tambaleo")),
+  ];
+  const r = compareOutcomes(items);
+  ok(r.ready, "no quedó lista con 4 y 4");
+  const top = r.rows.find((x) => x.level);
+  ok(top?.metric === "hipLead", `la diferencia más clara salió en ${top?.metric}`);
+  ok(top.level === "clara", `nivel ${top.level}`);
+  near(top.diff, 70, 20, "diferencia de adelanto de cadera (ms)");
+});
+
+test("Buenos vs malos: lanzamientos iguales = sin diferencias claras", () => {
+  // 5 y 5 iguales (solo ruido de medición): no debe decir que hay una diferencia clara.
+  const items = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((seed, i) => ({ outcome: i < 5 ? "bien" : "se_fue", analysis: analyzeForehand(syntheticThrow({ seed, noise: 0.004 })) }));
+  const r = compareOutcomes(items);
+  const flagged = r.rows.filter((x) => x.level === "clara").map((x) => x.metric);
+  ok(!flagged.length, `inventó diferencias en: ${flagged.join(", ")}`);
+});
+
+test("Buenos vs malos: con menos de 3 por grupo espera", () => {
+  const a = analyzeForehand(syntheticThrow());
+  const r = compareOutcomes([{ outcome: "bien", analysis: a }, { outcome: "bien", analysis: a }, { outcome: "se_fue", analysis: a }]);
+  ok(!r.ready && r.counts.good === 2 && r.counts.bad === 1, JSON.stringify(r.counts));
 });
 
 export { results };

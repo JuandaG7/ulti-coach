@@ -927,3 +927,7 @@ progress { width: 100%; margin-top: 8px; accent-color: var(--accent); }
 .outcome-tag.bien { color: var(--t3); }
 .outcome-tag.se_fue { color: var(--t1); }
 .outcome-tag.tambaleo { color: var(--t2); }
+.compare-row { display: grid; grid-template-columns: 1fr auto; grid-template-areas: none; gap: 4px 10px; align-items: center; padding: 10px 0; }
+.compare-row .metric-name { grid-area: auto; }
+.compare-row .chip { justify-self: end; }
+.compare-vals { grid-column: 1 / -1; color: var(--text-2); }

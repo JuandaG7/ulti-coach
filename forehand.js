@@ -361,11 +361,11 @@ export const METRICS = [
     muscle: "glutes", drills: ["Pivot con paso largo y forehand 3×10", "Sentadilla búlgara 3×12"],
   },
   {
-    id: "elbowAngle", scope: "own", name: "Ángulo del codo al soltar", unit: "°", decimals: 0,
+    id: "elbowAngle", scope: "own", name: "Ángulo del codo al soltar", unit: "°", decimals: 0, minDiff: 8,
     what: "Qué tan estirado está tu brazo al soltar. Depende del ángulo de la cámara: compáralo solo entre videos grabados igual.",
   },
   {
-    id: "releaseHeight", scope: "own", name: "Altura de suelta", unit: "% torso", decimals: 0,
+    id: "releaseHeight", scope: "own", name: "Altura de suelta", unit: "% torso", decimals: 0, minDiff: 10,
     what: "Altura de la mano al soltar respecto a tu cadera (negativo = por debajo). Depende del ángulo de la cámara.",
   },
 ];
@@ -400,6 +400,53 @@ export function consistency(analyses, bands = {}) {
     out[m.id] = { n: vals.length, mean, sd, ratio, level: ratio < 0.25 ? "estable" : ratio < 0.5 ? "variable" : "muy variable" };
   }
   return out;
+}
+
+// ---------- Tus buenos vs tus malos ----------
+// Compara tus lanzamientos marcados "salió bien" contra los que "se fueron" o "tambalearon":
+// qué métrica cambia más entre los dos grupos. Solo dice que hay diferencia cuando es grande frente a
+// lo que esa métrica varía dentro de cada grupo (tamaño del efecto d de Cohen) y, en las métricas con
+// tolerancia conocida, también frente a esa tolerancia. Umbrales estimados, a ajustar con datos reales.
+export const COMPARE_MIN = 3; // lanzamientos por grupo para empezar a comparar
+const CLEAR_MIN = 4; // para decir que una diferencia es "clara" (con 3, el azar engaña seguido)
+const D_POSSIBLE = 0.8;
+const D_CLEAR = 1.2;
+
+export function compareOutcomes(items, bands = {}) {
+  // items: [{ outcome, analysis }]
+  const ok = items.filter((x) => x.analysis?.quality.ok && x.outcome);
+  const good = ok.filter((x) => x.outcome === "bien").map((x) => x.analysis);
+  const bad = ok.filter((x) => x.outcome !== "bien").map((x) => x.analysis);
+  const counts = { good: good.length, bad: bad.length };
+  if (good.length < COMPARE_MIN || bad.length < COMPARE_MIN) return { counts, ready: false, rows: [] };
+
+  const stats = (vals) => {
+    const n = vals.length;
+    const mean = vals.reduce((a, b) => a + b, 0) / n;
+    const v = n > 1 ? vals.reduce((a, b) => a + (b - mean) ** 2, 0) / (n - 1) : 0;
+    return { n, mean, v };
+  };
+  const rows = [];
+  for (const m of METRICS) {
+    const g = good.map((a) => a.metrics[m.id]).filter((v) => v != null && Number.isFinite(v));
+    const b = bad.map((a) => a.metrics[m.id]).filter((v) => v != null && Number.isFinite(v));
+    if (g.length < COMPARE_MIN || b.length < COMPARE_MIN) continue;
+    const G = stats(g);
+    const B = stats(b);
+    const pooled = Math.sqrt(((G.n - 1) * G.v + (B.n - 1) * B.v) / (G.n + B.n - 2));
+    const diff = G.mean - B.mean;
+    // Sin variación dentro de los grupos, cualquier diferencia real es enorme; con 0 diferencia, nada.
+    const d = pooled > 1e-9 ? diff / pooled : diff === 0 ? 0 : Math.sign(diff) * 99;
+    // Diferencia práctica: al menos un cuarto de la tolerancia de la métrica (si la tiene).
+    const ref = bands[m.id] ?? { lo: Math.abs(B.mean), hi: Math.abs(B.mean) };
+    // (o el mínimo propio de las métricas que solo se comparan contra tus videos).
+    const practical = m.span ? Math.abs(diff) >= 0.25 * m.span(ref) : Math.abs(diff) >= (m.minDiff ?? 0);
+    const enough = G.n >= CLEAR_MIN && B.n >= CLEAR_MIN;
+    const level = !practical ? null : Math.abs(d) >= D_CLEAR && enough ? "clara" : Math.abs(d) >= D_POSSIBLE ? "posible" : null;
+    rows.push({ metric: m.id, good: G.mean, bad: B.mean, diff, d, level });
+  }
+  rows.sort((x, y) => Math.abs(y.d) - Math.abs(x.d));
+  return { counts, ready: true, rows };
 }
 
 // Rango pro de una métrica: con pocos clips, de mínimo a máximo; con 5 o más, del percentil 20 al 80

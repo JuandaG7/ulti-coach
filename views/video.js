@@ -7,7 +7,7 @@ import { level } from "../scoring.js";
 import { MUSCLES } from "../data/muscles.js";
 import {
   analyzeForehand, compactFrames, trimAroundRelease, point2D, METRICS, METRICS_BY_ID, BONES,
-  proBand, scoreVsPro, gapSide, moveRelease, consistency, CONSISTENCY_MIN,
+  proBand, scoreVsPro, gapSide, moveRelease, consistency, CONSISTENCY_MIN, compareOutcomes, COMPARE_MIN,
 } from "../forehand.js";
 import { listClips, saveClip, updateClip, deleteClip } from "../clips.js";
 import { icon, levelChip, ring, today, fmtDate, tierClass, toast } from "../ui.js";
@@ -118,6 +118,7 @@ function build() {
       </section>
       <section class="card" data-vs-pro></section>
       <section class="card" data-focus hidden></section>
+      <section class="card" data-compare></section>
 
       <section class="card">
         <h2 class="section-title duo-title" data-duo-title>Tú vs. pro</h2>
@@ -521,7 +522,7 @@ function wire() {
     mine = mine.map((c) => (c.id === clip.id ? clip : c));
     analyses.set(clip.id, current.a);
     current = { ...current, clip };
-    for (const x of el.querySelectorAll("[data-outcome-set]")) x.setAttribute("aria-selected", outcome === x.dataset.outcomeSet);
+    paintResult();
     paintLists();
   });
   $('[data-act="share-mine"]').addEventListener("click", shareMine);
@@ -677,6 +678,8 @@ function paintResult() {
   $("[data-vs-pro]").innerHTML = vsProCard(rows, overall, usable);
   paintFocus(rows, steady);
   $("[data-consistency]").innerHTML = consistencyCard(steady);
+  $("[data-compare]").innerHTML = compareCard(compareOutcomes(mine.map((c) => ({ outcome: c.outcome, analysis: analysisOf(c) })), bands));
+  bindDrills($("[data-compare]"));
   paintReleaseFix(clip, a);
   $("[data-own]").innerHTML = ownCard(clip, a);
   paintChainText(a);
@@ -752,6 +755,41 @@ function paintReleaseFix(clip, a) {
   $("[data-release-note]").textContent =
     (locked ? "Suelta marcada por ti" : "Suelta automática") + (fps ? ` · ${fps} fps` : "") +
     ". ¿No es donde sale el disco? Ve a ese cuadro y márcalo.";
+}
+
+// Tus buenos vs tus malos: qué cambia cuando el lanzamiento te sale bien.
+function compareCard(cmp) {
+  const { good, bad } = cmp.counts;
+  const head = `
+    <h2 class="section-title">Tus buenos vs tus malos</h2>
+    <p class="muted small section-sub">Qué haces distinto cuando el lanzamiento te sale bien. Marca cada lanzamiento arriba: «Salió bien», «Se fue» o «Tambaleó».</p>`;
+  if (!cmp.ready) {
+    const needGood = Math.max(0, COMPARE_MIN - good);
+    const needBad = Math.max(0, COMPARE_MIN - bad);
+    return `${head}
+      <p class="small">Marcados: <span class="num">${good}</span> buenos · <span class="num">${bad}</span> malos (sin avisos de calidad).
+      Faltan ${[needGood ? `${needGood} bueno${needGood > 1 ? "s" : ""}` : "", needBad ? `${needBad} malo${needBad > 1 ? "s" : ""}` : ""].filter(Boolean).join(" y ")}.</p>`;
+  }
+  const found = cmp.rows.filter((r) => r.level).slice(0, 3);
+  if (!found.length) {
+    return `${head}
+      <p class="small">Con ${good} buenos y ${bad} malos, todavía no hay una diferencia clara: lo que cambia entre ellos es menor que lo que varía cada medición. Sigue marcando lanzamientos.</p>`;
+  }
+  const fmt = (m, v) => `${Number(v).toFixed(m.decimals)} ${m.unit}`;
+  const top = METRICS_BY_ID[found[0].metric];
+  return `${head}
+    <ul class="metric-list">${found.map((r) => {
+      const m = METRICS_BY_ID[r.metric];
+      return `
+        <li class="compare-row">
+          <span class="metric-name">${m.name}${m.scope === "own" ? ` <span class="muted small">(depende de la cámara)</span>` : ""}</span>
+          <span class="chip ${r.level === "clara" ? "tier-t3" : "tier-t2"}">${r.level === "clara" ? "Clara" : "Posible"}</span>
+          <span class="small compare-vals">Buenos <strong class="num">${fmt(m, r.good)}</strong> · malos <strong class="num">${fmt(m, r.bad)}</strong></span>
+        </li>`;
+    }).join("")}</ul>
+    <p class="small"><strong>Lo que más cambia cuando te sale bien: ${top.name.toLowerCase()}.</strong> ${top.what}</p>
+    ${top.drills ? drillChips(top.drills) : ""}
+    <p class="muted small">Con ${good} buenos y ${bad} malos. «Posible» = puede ser azar; con 4 o más de cada uno la app puede decir «clara».</p>`;
 }
 
 // ¿Qué tan repetibles son tus números? Sin esto, una diferencia con los pros puede ser solo ruido.
