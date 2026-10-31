@@ -10,6 +10,10 @@ const SIDES = [["L", "izquierdo"], ["R", "derecho"]];
 const MAX_SECONDS = 20;
 
 // Cada prueba: dónde va la cámara, qué haces y cómo se calcula el ángulo en la imagen (2D).
+// Regla de la cámara: el video ve en plano, así que debe mirar el movimiento de frente a su plano
+// (perpendicular a él) y con el lente a la altura de la articulación. Si lo ve de reojo o desde arriba,
+// el ángulo sale más chico de lo real. sideCam: la cámara va del lado que mides (la pierna o el brazo
+// más cercano se detecta mejor).
 // angle(p, s): p(i) = punto en píxeles; s = "L" o "R". Devuelve grados o null.
 const deg = (r) => (r * 180) / Math.PI;
 const vec = (a, b) => ({ x: b.x - a.x, y: b.y - a.y });
@@ -17,16 +21,36 @@ const between = (u, v) => deg(Math.acos(Math.max(-1, Math.min(1, (u.x * v.x + u.
 const id = (s, name) => LM[`${s}_${name}`];
 const other = (s) => (s === "L" ? "R" : "L");
 
+// Hombros: la cámara mira a lo largo del brazo (desde el codo hacia el hombro), así el antebrazo
+// gira de frente a ella.
+const SHOULDER_CAM = {
+  where: "Al lado del brazo que mides, en la línea del brazo: mirando desde más allá del codo hacia tu hombro",
+  height: "En el piso, con el lente a la altura del codo (unos 10 cm, apoyado contra un zapato)",
+  distance: "1–1,5 m del codo: que se vean el codo y la mano en todo el movimiento",
+  orient: "Vertical",
+};
+
 export const VIDEO_ANGLE_TESTS = {
   aslr: {
-    camera: "En el piso, de lado, a 2–3 m, que se vea todo tu cuerpo acostado.",
+    camera: {
+      where: "Al costado de tu cuerpo, mirando tu cadera de frente (perpendicular a ti)",
+      height: "En el piso, con el lente a unos 20 cm (apoyado contra un zapato)",
+      distance: "2,5–3 m: que entres entero, de la cabeza a los pies, también con la pierna arriba",
+      orient: "Horizontal",
+    },
+    sideCam: true,
     move: "Sube la pierna estirada lo más alto que puedas, aguanta 2 s y bájala.",
     // Ángulo entre la pierna que sube y la que queda en el piso (cadera → tobillo).
     angle: (p, s) => between(vec(p(id(s, "HIP")), p(id(s, "ANKLE"))), vec(p(id(other(s), "HIP")), p(id(other(s), "ANKLE")))),
     lines: (s) => [[id(s, "HIP"), id(s, "ANKLE")], [id(other(s), "HIP"), id(other(s), "ANKLE")]],
   },
   hipIR: {
-    camera: "De frente, a la altura de tus rodillas, a unos 2 m: que se vean cadera, rodillas y pies.",
+    camera: {
+      where: "Justo frente a ti, centrado entre tus rodillas",
+      height: "A la altura de tus rodillas (sobre una silla o un cajón), sin inclinarlo hacia arriba ni hacia abajo",
+      distance: "Unos 2 m: que se vean cadera, rodillas y pies",
+      orient: "Vertical",
+    },
     move: "Sentado al borde, gira el pie hacia afuera sin mover el muslo, aguanta 2 s y vuelve.",
     // Cuánto se separa la espinilla (rodilla → tobillo) de la vertical.
     angle: (p, s) => between(vec(p(id(s, "KNEE")), p(id(s, "ANKLE"))), { x: 0, y: 1 }),
@@ -34,7 +58,12 @@ export const VIDEO_ANGLE_TESTS = {
     vertical: (s) => id(s, "KNEE"),
   },
   thoracicRot: {
-    camera: "En el piso detrás de ti, a tus pies, mirando hacia tu cabeza, a 1.5–2 m: que se vean tus hombros.",
+    camera: {
+      where: "Detrás de ti, en la línea de tu columna, mirando hacia tu cabeza",
+      height: "A la altura de tus hombros en cuatro apoyos (sobre una silla, unos 50 cm)",
+      distance: "1,5–2 m: que se vean los dos hombros también al girar",
+      orient: "Horizontal",
+    },
     move: "En cuatro apoyos sentado en los talones, gira el codo hacia el techo, aguanta 2 s y vuelve.",
     // Inclinación de la línea de hombros respecto a la horizontal.
     angle: (p) => {
@@ -46,7 +75,8 @@ export const VIDEO_ANGLE_TESTS = {
     bothSides: true,
   },
   shoulderER: {
-    camera: "En el piso, más allá de tu mano, mirando hacia tu hombro (en la línea del brazo), a 1.5 m.",
+    camera: SHOULDER_CAM,
+    sideCam: true,
     move: "Brazo a 90° y codo a 90°: deja caer la mano hacia atrás, aguanta 2 s y vuelve.",
     // Cuánto bajó el antebrazo (codo → muñeca) desde la vertical.
     angle: (p, s) => between(vec(p(id(s, "ELBOW")), p(id(s, "WRIST"))), { x: 0, y: -1 }),
@@ -54,7 +84,8 @@ export const VIDEO_ANGLE_TESTS = {
     vertical: (s) => id(s, "ELBOW"),
   },
   shoulderIR: {
-    camera: "En el piso, más allá de tu mano, mirando hacia tu hombro (en la línea del brazo), a 1.5 m.",
+    camera: SHOULDER_CAM,
+    sideCam: true,
     move: "Brazo a 90° y codo a 90°: deja caer la mano hacia los pies, aguanta 2 s y vuelve.",
     angle: (p, s) => between(vec(p(id(s, "ELBOW")), p(id(s, "WRIST"))), { x: 0, y: -1 }),
     lines: (s) => [[id(s, "ELBOW"), id(s, "WRIST")]],
@@ -105,9 +136,16 @@ export function openAngleVideo(testDef, onResult) {
       <div class="angle-video">
         <p class="eyebrow">${testDef.name}</p>
         <h2 class="sheet-title">Medir con video</h2>
+        <p><strong>Movimiento:</strong> ${test.move}</p>
+        <p class="eyebrow">Cámara (lo más importante para que el ángulo salga bien)</p>
+        <dl class="cam-setup">
+          <dt>Dónde</dt><dd>${test.camera.where}</dd>
+          <dt>Altura</dt><dd>${test.camera.height}</dd>
+          <dt>Distancia</dt><dd>${test.camera.distance}</dd>
+          <dt>Celular</dt><dd>${test.camera.orient}, quieto (apoyado o en trípode), sin inclinar</dd>
+        </dl>
         <ol class="tips">
-          <li><strong>Cámara:</strong> ${test.camera} El celular quieto (apoyado o en trípode) y derecho.</li>
-          <li><strong>Movimiento:</strong> ${test.move}</li>
+          <li>Buena luz, ropa ajustada y un fondo liso: el cuerpo se detecta mejor.</li>
           <li>Un video por lado, de 3 a 10 segundos.</li>
         </ol>
         <p class="angle-step" data-step></p>
@@ -134,7 +172,8 @@ export function openAngleVideo(testDef, onResult) {
 
     const paint = () => {
       const done = side >= SIDES.length;
-      $("[data-step]").innerHTML = done ? "Listo, los dos lados medidos." : `<strong>Lado ${SIDES[side][1]}.</strong> Graba o elige el video.`;
+      $("[data-step]").innerHTML = done ? "Listo, los dos lados medidos."
+        : `<strong>Lado ${SIDES[side][1]}.</strong> ${test.sideCam ? `Cámara a tu lado ${SIDES[side][1]}. ` : ""}Graba o elige el video.`;
       $("[data-pick]").hidden = done;
       $("[data-pick-label]").textContent = `Video del lado ${done ? "" : SIDES[side][1]}`;
       $("[data-sides]").innerHTML = SIDES.map(([k, n]) => `<li><span>${n[0].toUpperCase() + n.slice(1)}</span><span class="num">${result[k] != null ? `${result[k]}°` : "–"}</span></li>`).join("");

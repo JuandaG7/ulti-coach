@@ -916,3 +916,6 @@ progress { width: 100%; margin-top: 8px; accent-color: var(--accent); }
 .measure-btn .icon { width: 14px; height: 14px; }
 .plan-block.medicion .subhead { color: var(--accent); }
 .feel-row { display: grid; gap: 8px; margin-top: 6px; }
+.cam-setup { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; padding: 12px 14px; border-radius: 12px; background: var(--surface-2); font-size: 0.9rem; }
+.cam-setup dt { font-weight: 700; color: var(--accent); }
+.cam-setup dd { margin: 0; color: var(--text-2); }
