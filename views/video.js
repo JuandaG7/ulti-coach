@@ -43,6 +43,10 @@ const PRO_SOURCES = [
   { label: "Instagram #ultimatefrisbee", url: "https://www.instagram.com/explore/tags/ultimatefrisbee/" },
 ];
 
+// Resultado de cada lanzamiento tuyo (lo marcas tú): sirve para comparar los buenos con los malos.
+const OUTCOMES = [["bien", "Salió bien"], ["se_fue", "Se fue"], ["tambaleo", "Tambaleó"]];
+const OUTCOME_NAME = Object.fromEntries(OUTCOMES);
+
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const fmtVal = (m, v) => (v == null ? "–" : `${Number(v).toFixed(m.decimals)}`);
@@ -107,6 +111,11 @@ function build() {
 
     <div class="fh-result" hidden data-result>
       <div class="banner warn" hidden data-warn></div>
+      <section class="card outcome-card" data-outcome>
+        <p class="eyebrow">¿Cómo salió este lanzamiento?</p>
+        <div class="segmented wide">${OUTCOMES.map(([id, name]) => `<button type="button" data-outcome-set="${id}" aria-selected="false">${name}</button>`).join("")}</div>
+        <p class="muted small">Con varios marcados, la app compara tus lanzamientos buenos con los malos.</p>
+      </section>
       <section class="card" data-vs-pro></section>
       <section class="card" data-focus hidden></section>
 
@@ -231,6 +240,8 @@ function build() {
       <details data-hist>
         <summary><span class="summary-label"><span class="eyebrow">Tus videos</span> <span class="num" data-mine-count>0</span></span><span class="toggle"><span class="when-closed">Ver más</span><span class="when-open">Ver menos</span>${icon("down")}</span></summary>
         <ul class="clip-list" data-mine-list></ul>
+        <button type="button" class="btn secondary block" data-act="share-mine" hidden>${icon("upload")} Compartir todos mis análisis</button>
+        <p class="muted small" data-share-note hidden>Un solo archivo con el esqueleto, las métricas y cómo salió cada lanzamiento (sin los videos). Mándaselo a tu entrenador o a quien te ayude a revisarlos.</p>
       </details>
     </section>
   `;
@@ -496,6 +507,25 @@ function wire() {
   });
   window.addEventListener("resize", () => el.isConnected && layout());
 
+  for (const b of el.querySelectorAll("[data-outcome-set]")) b.addEventListener("click", async () => {
+    if (!current) return;
+    const outcome = current.clip.outcome === b.dataset.outcomeSet ? null : b.dataset.outcomeSet;
+    const clip = { ...current.clip, outcome };
+    if (clip.id !== "temp") {
+      try {
+        await updateClip(clip);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    mine = mine.map((c) => (c.id === clip.id ? clip : c));
+    analyses.set(clip.id, current.a);
+    current = { ...current, clip };
+    for (const x of el.querySelectorAll("[data-outcome-set]")) x.setAttribute("aria-selected", outcome === x.dataset.outcomeSet);
+    paintLists();
+  });
+  $('[data-act="share-mine"]').addEventListener("click", shareMine);
+
   $('[data-act="export"]').addEventListener("click", () => {
     if (!current) return;
     const blob = new Blob([JSON.stringify(current.clip)], { type: "application/json" });
@@ -608,6 +638,9 @@ function paintResult() {
   const pro = usable.find((c) => c.id === proId);
   mirror = pro ? pro.hand !== clip.hand : false;
   $('[data-act="mirror"]').setAttribute("aria-pressed", mirror);
+
+  // ¿Cómo salió? (solo en tus clips)
+  for (const b of el.querySelectorAll("[data-outcome-set]")) b.setAttribute("aria-selected", clip.outcome === b.dataset.outcomeSet);
 
   // Avisos de calidad
   const warn = $("[data-warn]");
@@ -1161,6 +1194,8 @@ function paintLists() {
           </li>`;
       }).join("")
     : `<li class="muted small">Sin clips todavía. Con 3 o más el rango pro empieza a ser útil.</li>`;
+  $('[data-act="share-mine"]').hidden = !mine.length;
+  $("[data-share-note]").hidden = !mine.length;
   $("[data-mine-list]").innerHTML = mine.length
     ? mine.map((c) => {
         const a = analysisOf(c);
@@ -1168,7 +1203,7 @@ function paintLists() {
           <li class="clip-row">
             <button type="button" class="clip-main" data-open="${c.id}">
               <span class="clip-name">${fmtDate(c.date)} · ${esc(c.name)}</span>
-              <span class="muted small">${a ? `muñeca ${a.metrics.wristSpeed.toFixed(1)} · cadena ${a.metrics.chainOrder ?? "–"} de 3` : "sin lanzamiento"}</span>
+              <span class="muted small">${a ? `muñeca ${a.metrics.wristSpeed.toFixed(1)} · cadena ${a.metrics.chainOrder ?? "–"} de 3` : "sin lanzamiento"}${c.outcome ? ` · <span class="outcome-tag ${c.outcome}">${OUTCOME_NAME[c.outcome]}</span>` : ""}</span>
             </button>
             <button type="button" class="icon-btn danger" data-del="${c.id}" aria-label="Borrar video del ${fmtDate(c.date)}">${icon("trash")}</button>
           </li>`;
@@ -1185,6 +1220,43 @@ function openLib() {
 // ---------- Compartir la biblioteca ----------
 // Se comparte como archivo (WhatsApp, AirDrop): nunca pasa por el repositorio ni por un servidor.
 const LIB_TYPE = "ulti-coach/biblioteca-pro";
+
+// Todos tus análisis en un archivo (sin video): esqueleto, métricas, calidad y cómo salió cada uno.
+async function shareMine() {
+  const r3 = (v) => Math.round(v * 1000) / 1000;
+  const slim = (f) => ({ t: r3(f.t), p: f.p && f.p.map(r3), w: f.w && f.w.map(r3) });
+  const round = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, v == null ? null : Math.round(v * 100) / 100]));
+  const data = {
+    type: "ulti-coach/mis-lanzamientos",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    hand: myHand(),
+    pros: validPros().map((c) => c.name),
+    clips: mine.map((c) => {
+      const a = analysisOf(c);
+      return {
+        id: c.id, name: c.name, date: c.date, hand: c.hand, factor: c.factor, fps: c.fps ?? null, outcome: c.outcome ?? null,
+        releaseLocked: !!c.releaseLocked, shift: c.shift ?? 0, w: c.w, h: c.h,
+        metrics: a ? round(a.metrics) : null, peaks: a ? round(a.peaks) : null, quality: a ? { ok: a.quality.ok, warnings: a.quality.warnings } : null,
+        frames: c.frames.map(slim),
+      };
+    }),
+  };
+  const file = new File([JSON.stringify(data)], `mis-lanzamientos-${today()}.json`, { type: "application/json" });
+  if (navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: "Mis lanzamientos · Ulti Coach" });
+      return;
+    } catch (err) {
+      if (err.name === "AbortError") return;
+    }
+  }
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(file);
+  link.download = file.name;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
 
 async function shareLibrary() {
   // 3 decimales (≈ 1 mm) bastan para las métricas y el archivo pesa menos.
