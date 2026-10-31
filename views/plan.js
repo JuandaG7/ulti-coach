@@ -7,7 +7,7 @@ import { weekKey } from "../data/checkin.js";
 import { weekPlan, stageCriteria, doneThisWeek, RETEST_DAYS } from "../plan.js";
 import { GOALS, FEELS, EQUIPMENT, MINUTES } from "../data/plan-prefs.js";
 import { TESTS_BY_ID } from "../data/tests.js";
-import { analyzeForehand, proBand, scoreVsPro, consistency, METRICS } from "../forehand.js";
+import { analyzeForehand, throwGaps } from "../forehand.js";
 import { listClips } from "../clips.js";
 import { icon, today, tierClass, fmtDate } from "../ui.js";
 import { openSheet, closeSheet } from "./sheet.js";
@@ -18,30 +18,20 @@ import { openCheckinSheet } from "./checkin.js";
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const DAYS = [2, 3, 4, 5];
 
-// La métrica de tu forehand más lejos del rango pro (sin contar las que saltan mucho entre videos).
-// Los clips viven en IndexedDB (asíncrono): se calcula una vez y se redibuja cuando está lista.
-let throwFocus;
+// Lo que el plan entrena de tu forehand: las 2 métricas más lejos del rango pro (mediana de tus
+// últimos 5 videos) y en qué mejoraste. Los clips viven en IndexedDB (asíncrono): se calcula una vez
+// y se redibuja cuando está listo.
+let throwInfo = null; // { gaps, progress, n }
 let justDone = null; // la sesión recién marcada queda abierta para decir cómo te fue
 let throwKey = null;
 async function loadThrowFocus(root) {
   try {
     const [pros, mine] = await Promise.all([listClips("pro"), listClips("mine")]);
-    const key = `${pros.length}:${mine.length}:${mine[0]?.id}:${mine[0]?.shift ?? 0}`;
+    const key = `${pros.map((c) => c.id).join()}|${mine.map((c) => `${c.id}:${c.shift ?? 0}`).join()}`;
     if (key === throwKey) return;
     throwKey = key;
-    const proA = pros.map(analyzeForehand).filter(Boolean);
-    const myA = mine.map(analyzeForehand).filter(Boolean);
-    let focus = null;
-    if (proA.length && myA.length) {
-      const bands = Object.fromEntries(METRICS.filter((m) => m.scope === "pro").map((m) => [m.id, proBand(proA.map((a) => a.metrics[m.id]))]));
-      const steady = consistency(myA, bands);
-      const rows = METRICS.filter((m) => m.scope === "pro" && m.drills && steady[m.id]?.level !== "muy variable")
-        .map((m) => ({ metric: m.id, score: scoreVsPro(m.id, myA[0].metrics[m.id], bands[m.id]), value: myA[0].metrics[m.id], band: bands[m.id] }))
-        .filter((r) => r.score != null && r.score < 85)
-        .sort((a, b) => a.score - b.score);
-      focus = rows[0] ?? null;
-    }
-    throwFocus = focus;
+    const info = throwGaps(pros.map(analyzeForehand), mine.map(analyzeForehand));
+    throwInfo = info.gaps.length || info.progress.length ? info : null;
     if (root.isConnected) render(root);
   } catch (err) {
     console.error(err);
@@ -53,7 +43,7 @@ export function render(root) {
   const mode = p?.mode ?? "casa";
   const days = p?.planDays ?? 3;
   const date = today();
-  const plan = weekPlan({ days, mode, throwFocus, today: date });
+  const plan = weekPlan({ days, mode, throwInfo, today: date });
   const done = doneThisWeek(date);
   const next = plan.sessions.find((s) => !done.has(s.n));
   const week = weekKey(date);
@@ -233,9 +223,9 @@ function reasonsCard(plan) {
     <section class="card reasons-card">
       <h2 class="section-title">Por qué este plan</h2>
       <ul class="reasons">${plan.reasons.map((r) => `
-        <li>
-          <i class="dot ${r.score != null ? tierClass(r.score) : "tier-none"}"></i>
-          <span><strong>${esc(r.title)}${r.score != null ? ` · <span class="num">${r.score}</span>` : ""}</strong><span class="muted small">${esc(r.detail)}</span></span>
+        <li class="${r.kind === "mejora" ? "improved" : ""}">
+          ${r.kind === "mejora" ? `<span class="improved-mark">${icon("check")}</span>` : `<i class="dot ${r.score != null ? tierClass(r.score) : "tier-none"}"></i>`}
+          <span><strong>${esc(r.title)}${r.score != null && r.kind !== "mejora" ? ` · <span class="num">${r.score}</span>` : ""}</strong><span class="muted small">${esc(r.detail)}</span></span>
           ${r.testId ? `<button type="button" class="link small" data-test="${r.testId}">Medir</button>` : ""}
         </li>`).join("")}
       </ul>
@@ -296,7 +286,7 @@ function sessionCard(s, isDone, isNext, feel, date) {
 export function nextSession() {
   const p = store.profile();
   const date = today();
-  const plan = weekPlan({ days: p?.planDays ?? 3, mode: p?.mode ?? "casa", throwFocus, today: date });
+  const plan = weekPlan({ days: p?.planDays ?? 3, mode: p?.mode ?? "casa", throwInfo, today: date });
   const done = doneThisWeek(date);
   return { plan, done, next: plan.sessions.find((s) => !done.has(s.n)) ?? null };
 }

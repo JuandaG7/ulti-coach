@@ -1,6 +1,6 @@
 // Pruebas del análisis del forehand con lanzamientos sintéticos: un esqueleto armado a mano
 // donde sabemos la respuesta (cuándo gira la cadera, cuándo suelta, etc.).
-import { analyzeForehand, trimAroundRelease, moveRelease, consistency, proBand, scoreVsPro, compareOutcomes } from "../forehand.js";
+import { analyzeForehand, trimAroundRelease, moveRelease, consistency, proBand, scoreVsPro, compareOutcomes, throwGaps } from "../forehand.js";
 
 // Función de distribución normal acumulada (aprox. de erf): convierte un pico de velocidad
 // con forma de campana en una posición que avanza suave.
@@ -183,6 +183,27 @@ test("Buenos vs malos: con menos de 3 por grupo espera", () => {
   const a = analyzeForehand(syntheticThrow());
   const r = compareOutcomes([{ outcome: "bien", analysis: a }, { outcome: "bien", analysis: a }, { outcome: "se_fue", analysis: a }]);
   ok(!r.ready && r.counts.good === 2 && r.counts.bad === 1, JSON.stringify(r.counts));
+});
+
+test("Plan de lanzamiento: mediana de tus últimos 5 (un video raro no cambia la falla)", () => {
+  const pros = [-0.14, -0.12, -0.13].map((hip, i) => analyzeForehand(syntheticThrow({ hip, seed: 50 + i })));
+  // Del más nuevo al más viejo: 4 con la cadera tarde y 1 "raro" con la cadera a tiempo.
+  const mine = [-0.05, -0.13, -0.05, -0.06, -0.05].map((hip, i) => analyzeForehand(syntheticThrow({ hip, seed: 60 + i, noise: 0.003 })));
+  const r = throwGaps(pros, mine);
+  ok(r.gaps[0]?.metric === "hipLead", `primera falla: ${r.gaps[0]?.metric}`);
+  ok(r.gaps.length <= 2, `${r.gaps.length} fallas`);
+  ok(r.gaps[0].muscle === "glutes", `músculo: ${r.gaps[0].muscle}`);
+});
+
+test("Plan de lanzamiento: detecta que mejoraste frente a tus 5 videos anteriores", () => {
+  const pros = [-0.14, -0.12, -0.13].map((hip, i) => analyzeForehand(syntheticThrow({ hip, seed: 70 + i })));
+  const recent = [-0.11, -0.12, -0.11, -0.12, -0.11];
+  const before = [-0.04, -0.05, -0.04, -0.05, -0.04];
+  const mine = [...recent, ...before].map((hip, i) => analyzeForehand(syntheticThrow({ hip, seed: 80 + i, noise: 0.003 })));
+  const r = throwGaps(pros, mine);
+  const p = r.progress.find((x) => x.metric === "hipLead");
+  ok(p, `no detectó la mejora (progress: ${r.progress.map((x) => x.metric).join(", ") || "nada"})`);
+  ok(p.to > p.from, `de ${p.from} a ${p.to}`);
 });
 
 export { results };

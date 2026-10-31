@@ -402,6 +402,45 @@ export function consistency(analyses, bands = {}) {
   return out;
 }
 
+// ---------- Lo que el plan entrena de tu forehand ----------
+// myAnalyses: tus análisis del más nuevo al más viejo. Usa la mediana de tus últimos 5 videos (un
+// lanzamiento raro no cambia el plan), toma las 2 métricas más lejos del rango pro (sin las que saltan
+// mucho entre videos) y compara con tus 5 videos anteriores para decirte en qué mejoraste.
+export const THROW_WINDOW = 5;
+const IMPROVED = 15; // puntos de mejora para decir "mejoraste"
+
+const medianOf = (vals) => {
+  const s = vals.filter((v) => v != null && Number.isFinite(v)).sort((a, b) => a - b);
+  return s.length ? s[Math.floor((s.length - 1) / 2)] : null;
+};
+
+export function throwGaps(proAnalyses, myAnalyses) {
+  const pros = proAnalyses.filter(Boolean);
+  const mine = myAnalyses.filter((a) => a?.quality.ok);
+  if (!pros.length || !mine.length) return { gaps: [], progress: [], n: mine.length };
+  const recent = mine.slice(0, THROW_WINDOW);
+  const before = mine.slice(THROW_WINDOW, THROW_WINDOW * 2);
+  const proMetrics = METRICS.filter((x) => x.scope === "pro");
+  const bands = Object.fromEntries(proMetrics.map((m) => [m.id, proBand(pros.map((a) => a.metrics[m.id]))]));
+  const steady = consistency(mine, bands); // igual que la tarjeta de confiabilidad de Video
+  const gaps = [];
+  const progress = [];
+  for (const m of proMetrics) {
+    const band = bands[m.id];
+    const value = medianOf(recent.map((a) => a.metrics[m.id]));
+    const score = scoreVsPro(m.id, value, band);
+    if (score == null) continue;
+    if (score < 85 && m.drills && steady[m.id]?.level !== "muy variable") gaps.push({ metric: m.id, score, value, band, muscle: m.muscle });
+    if (before.length >= 2) {
+      const prev = medianOf(before.map((a) => a.metrics[m.id]));
+      const prevScore = scoreVsPro(m.id, prev, band);
+      if (prevScore != null && score - prevScore >= IMPROVED) progress.push({ metric: m.id, from: prev, to: value, scoreFrom: prevScore, scoreTo: score });
+    }
+  }
+  gaps.sort((a, b) => a.score - b.score);
+  return { gaps: gaps.slice(0, 2), progress, n: recent.length };
+}
+
 // ---------- Tus buenos vs tus malos ----------
 // Compara tus lanzamientos marcados "salió bien" contra los que "se fueron" o "tambalearon":
 // qué métrica cambia más entre los dos grupos. Solo dice que hay diferencia cuando es grande frente a

@@ -202,7 +202,7 @@ function weakestTest(muscle) {
   return worst;
 }
 
-export function planReasons({ prefs, throwFocus, muscles, joints }) {
+export function planReasons({ prefs, throwInfo, muscles, joints }) {
   const out = [];
   for (const m of muscles.slice(0, 2)) {
     const w = weakestTest(m.muscle);
@@ -221,18 +221,32 @@ export function planReasons({ prefs, throwFocus, muscles, joints }) {
       ? { kind: "blindaje", score: j.score, title: `Blindaje · ${j.joint.name}`, detail: `Lado ${a.weak === "L" ? "izquierdo" : "derecho"} ${a.pct} % más débil en ${TESTS_BY_ID[a.testId].name.toLowerCase()}`, testId: a.testId }
       : { kind: "blindaje", score: j.score, title: `Blindaje · ${j.joint.name}`, detail: j.injury?.status === "activa" ? "Lesión activa" : j.score == null ? "Sin medir" : `Zona con más riesgo (${j.score})` });
   }
-  if (throwFocus) {
-    const m = METRICS_BY_ID[throwFocus.metric];
-    const band = throwFocus.band;
-    out.push({ kind: "lanzamiento", score: throwFocus.score, title: `Tu forehand · ${m.name.toLowerCase()}`, detail: band ? `Tú ${Number(throwFocus.value).toFixed(m.decimals)} ${m.unit} · pros ${band.lo.toFixed(m.decimals)}–${band.hi.toFixed(m.decimals)}` : "" });
+  const v = (m, x) => `${Number(x).toFixed(m.decimals)} ${m.unit}`;
+  const range = (m, b) => {
+    const lo = b.lo.toFixed(m.decimals);
+    const hi = b.hi.toFixed(m.decimals);
+    return lo === hi ? lo : `${lo}–${hi}`;
+  };
+  for (const g of throwInfo?.gaps ?? []) {
+    const m = METRICS_BY_ID[g.metric];
+    const muscle = MUSCLES[g.muscle];
+    out.push({
+      kind: "lanzamiento", score: g.score, title: `Tu forehand · ${m.name.toLowerCase()}`,
+      detail: `Tú ${v(m, g.value)} (tus últimos ${throwInfo.n} videos) · pros ${range(m, g.band)}${muscle ? ` · fuerza: ${muscle.name.toLowerCase()}` : ""}`,
+    });
+  }
+  for (const p of throwInfo?.progress ?? []) {
+    const m = METRICS_BY_ID[p.metric];
+    out.push({ kind: "mejora", score: p.scoreTo, title: `Mejoraste · ${m.name.toLowerCase()}`, detail: `De ${v(m, p.from)} a ${v(m, p.to)} (${p.scoreFrom} → ${p.scoreTo} pts)` });
   }
   return out;
 }
 
 // ---------- Semana ----------
 
-// throwFocus: { metric, score, value, band } de tu forehand (lo calcula la vista: los clips son asíncronos).
-export function weekPlan({ days = 3, mode = "casa", throwFocus = null, today }) {
+// throwInfo: { gaps, progress, n } de tu forehand (forehand.js · throwGaps; lo calcula la vista porque
+// los clips son asíncronos).
+export function weekPlan({ days = 3, mode = "casa", throwInfo = null, today }) {
   const prefs = store.profile()?.planPrefs ?? null;
   const size = SIZE[prefs?.minutes ?? 45];
   const injury = activeInjury();
@@ -253,14 +267,17 @@ export function weekPlan({ days = 3, mode = "casa", throwFocus = null, today }) 
   const allowed = (d) => !(noImpact && IMPACT.test(d)) && !(noSpeed && SPEED.test(d)) && hasEquip(d);
   const isPower = (d) => IMPACT.test(d) || SPEED.test(d);
 
-  // Prioridad de cada músculo: la de siempre × lo que quieres mejorar (sus pruebas en tus categorías).
+  // Prioridad de cada músculo: la de siempre × lo que quieres mejorar (sus pruebas en tus categorías)
+  // × 1.5 si está detrás de una falla de tu forehand (p. ej. oblicuos si tus hombros giran tarde).
   const cw = categoryWeights(prefs);
+  const throwGapsList = throwInfo?.gaps ?? [];
+  const throwMuscles = new Set(throwGapsList.map((g) => g.muscle));
   const muscles = priorities()
     .filter((p) => !blocked.has(p.id))
     .map((p) => {
       const cats = new Set(Object.keys(p.muscle.tests).map((t) => TESTS_BY_ID[t]?.cat));
-      const boost = 1 + 0.35 * [...cats].reduce((sum, cat) => sum + (cw[cat] ?? 0), 0);
-      return { ...p, priority: p.priority * boost };
+      const boost = (1 + 0.35 * [...cats].reduce((sum, cat) => sum + (cw[cat] ?? 0), 0)) * (throwMuscles.has(p.id) ? 1.5 : 1);
+      return { ...p, priority: p.priority * boost, forThrow: throwMuscles.has(p.id) };
     })
     .sort((a, b) => b.priority - a.priority)
     .slice(0, days * size.fuerza);
@@ -322,7 +339,7 @@ export function weekPlan({ days = 3, mode = "casa", throwFocus = null, today }) 
       .filter(Boolean)
       .map((m) => {
         const d = pick(m.muscle.drills[mode], (x) => !isPower(x) && allowed(x));
-        return d && item(d, m.muscle.name, m.score);
+        return d && item(d, m.forThrow ? `${m.muscle.name} · para tu forehand` : m.muscle.name, m.score);
       })
       .filter(Boolean);
     if (strength.length) blocks.push({ kind: "fuerza", title: "Fuerza", items: strength });
@@ -339,11 +356,22 @@ export function weekPlan({ days = 3, mode = "casa", throwFocus = null, today }) 
     }
 
     // Lanzamiento: lo que más le falta a tu forehand; si no hay video pero es tu objetivo, ejercicios generales.
-    if (throwOk && (throwFocus || wantsThrow) && (i % 2 === 0 || days <= 2)) {
-      const m = throwFocus ? METRICS_BY_ID[throwFocus.metric] : null;
-      const list = m?.drills ?? ["Snaps de forehand con toalla 3×20", "Lanzamiento rotacional con balón medicinal 3×8", "Pivot con paso largo y forehand 3×10"];
-      const items = list.filter((x) => !used.has(exKey(x)) && allowed(x)).slice(0, size.lanzamiento)
-        .map((d) => item(d, m ? `Tu forehand · ${m.name.toLowerCase()}` : "Tu objetivo: lanzar", throwFocus?.score ?? null));
+    // Con 2 fallas, un ejercicio de cada una; con 1, sus ejercicios; sin video pero con el objetivo, generales.
+    if (throwOk && (throwGapsList.length || wantsThrow) && (i % 2 === 0 || days <= 2)) {
+      const sources = throwGapsList.length
+        ? throwGapsList.map((g) => ({ m: METRICS_BY_ID[g.metric], score: g.score }))
+        : [{ m: null, score: null }];
+      const generic = ["Snaps de forehand con toalla 3×20", "Lanzamiento rotacional con balón medicinal 3×8", "Pivot con paso largo y forehand 3×10"];
+      const items = [];
+      for (let round = 0; round < 3 && items.length < size.lanzamiento; round++) {
+        for (const { m, score } of sources) {
+          if (items.length >= size.lanzamiento) break;
+          const d = (m?.drills ?? generic).filter((x) => !used.has(exKey(x)) && allowed(x))[0];
+          if (!d) continue;
+          used.add(exKey(d));
+          items.push(item(d, m ? `Tu forehand · ${m.name.toLowerCase()}` : "Tu objetivo: lanzar", score));
+        }
+      }
       if (items.length) blocks.push({ kind: "lanzamiento", title: "Lanzamiento", items });
     }
 
@@ -361,7 +389,7 @@ export function weekPlan({ days = 3, mode = "casa", throwFocus = null, today }) 
   for (const z of painful) notes.push({ level: "yellow", text: `Dolor en ${JOINTS[z].name.toLowerCase()} esta semana: quitamos los ejercicios que la cargan.` });
   if (injury && lowerHurt && stage < 3) notes.push({ level: "info", text: "Sin saltos ni sprints hasta la etapa 3 de tu vuelta." });
 
-  const reasons = planReasons({ prefs, throwFocus, muscles, joints });
+  const reasons = planReasons({ prefs, throwInfo, muscles, joints });
   return { injury, stage, deload, wellness: w, level, measureDue, sessions, notes, reasons, prefs };
 }
 
