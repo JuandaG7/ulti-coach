@@ -4,9 +4,9 @@
 // Regla para que tus mediciones sirvan: mídete siempre igual (mismo lugar, superficie, calzado,
 // calentamiento y forma de cronometrar). Cambiar el método cambia el número aunque tú no hayas cambiado.
 
-// Pruebas de ángulo: se miden con el medidor de la app (views/angle-meter.js), que pone el cero en la
-// posición inicial y toma la medida sola.
-const METER = "Toca «Medir con el celular» (arriba) y sigue la voz: en la posición inicial la app pone el cero; al llegar al final y quedarte quieto, toma la medida. Luego el otro lado.";
+// Pruebas de ángulo: se miden con video (views/angle-video.js). La app detecta tu cuerpo, busca el
+// momento de máximo rango y calcula el ángulo.
+const METER = "Toca «Medir con video» (arriba). Celular quieto en el piso donde te indica, graba el movimiento y la app calcula el ángulo. Un video por lado.";
 const HAND_TIMER = "Un compañero con el cronómetro del celular. Arranca cuando tu primer pie se despega del piso (no con la voz) y para cuando tu pecho cruza la línea. Siempre la misma persona, para que el error sea el mismo.";
 
 export const PROTOCOLS = {
@@ -322,7 +322,7 @@ export const PROTOCOLS = {
     record: "Centímetros de cada lado (por ejemplo 9.5).",
   },
   aslr: {
-    need: ["El piso", "Tu celular", "Una media o banda para sujetar el celular (o alguien que lo sostenga)"],
+    need: ["El piso", "Tu celular apoyado en el piso o en un trípode"],
     steps: [
       METER,
       "Boca arriba, las dos piernas estiradas.",
@@ -332,7 +332,7 @@ export const PROTOCOLS = {
     record: "Grados de cada lado.",
   },
   hipIR: {
-    need: ["Una mesa o cama alta", "Tu celular", "Una media o banda para sujetarlo a la espinilla"],
+    need: ["Una mesa o cama alta", "Tu celular apoyado frente a ti, a la altura de las rodillas"],
     steps: [
       METER,
       "Sentado al borde de la mesa, rodillas dobladas a 90° y muslos quietos.",
@@ -341,7 +341,7 @@ export const PROTOCOLS = {
     record: "Grados de cada lado.",
   },
   thoracicRot: {
-    need: ["El piso", "Tu celular", "Una media o banda para sujetar el celular (o alguien que lo sostenga)"],
+    need: ["El piso", "Tu celular apoyado en el piso o en un trípode"],
     steps: [
       METER,
       "En cuatro apoyos y siéntate sobre los talones: esto bloquea la zona lumbar.",
@@ -351,7 +351,7 @@ export const PROTOCOLS = {
     record: "Grados de cada lado.",
   },
   shoulderER: {
-    need: ["El piso", "Tu celular", "Un compañero que sostenga el celular"],
+    need: ["El piso", "Tu celular apoyado en el piso"],
     steps: [
       METER,
       "Boca arriba, brazo a 90° del cuerpo y codo doblado a 90° (la mano apunta al techo).",
@@ -360,11 +360,11 @@ export const PROTOCOLS = {
     record: "Grados de cada lado.",
   },
   shoulderIR: {
-    need: ["El piso", "Tu celular", "Un compañero que sostenga el celular"],
+    need: ["El piso", "Tu celular apoyado en el piso"],
     steps: [
       METER,
       "Misma posición: boca arriba, brazo a 90° y codo a 90°.",
-      "Tu compañero te sujeta el hombro contra el piso.",
+      "Si puedes, que alguien te sujete el hombro contra el piso (para que no se levante).",
       "Deja caer la mano hacia adelante, hacia los pies, sin que el hombro se levante.",
     ],
     record: "Grados de cada lado.",

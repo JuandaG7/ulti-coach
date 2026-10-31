@@ -14,11 +14,15 @@
   </style>
 </head>
 <body>
-  <h1>Pruebas del análisis de lanzamientos</h1>
+  <h1>Pruebas de Ulti Coach</h1>
   <p id="summary">Corriendo…</p>
   <ul id="list"></ul>
+  <!-- Las vistas que se prueban importan sheet.js, que busca este diálogo al cargar. -->
+  <dialog id="sheet" hidden><div class="sheet-body"></div></dialog>
   <script type="module">
-    import { results } from "./forehand.test.js";
+    import { results as forehand } from "./forehand.test.js";
+    import { results as angles } from "./angles.test.js";
+    const results = [...forehand, ...angles];
     const failed = results.filter((r) => !r.ok).length;
     document.getElementById("summary").innerHTML = failed
       ? `<strong class="fail">${failed} de ${results.length} fallaron</strong>`

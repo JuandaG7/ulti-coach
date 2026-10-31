@@ -19,7 +19,7 @@ export const CATEGORIES = [
   { id: "movilidad", name: "Movilidad", blurb: "Rango para frenar bajo, pivotear amplio y lanzar sin dolor." },
 ];
 
-const INCLINE = " Mide el ángulo con «Medir con el celular»: la app pone el cero y toma la medida sola.";
+const INCLINE = " Mide el ángulo con «Medir con video»: la app calcula el ángulo.";
 
 export const TESTS = [
   // ---------- Velocidad ----------

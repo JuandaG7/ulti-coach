@@ -6,14 +6,14 @@ import * as store from "../store.js";
 import { testScore, target, isImprovement, level, snapshot, asymmetry, asymmetryFlag, isAgeAdjusted, plausibleRange } from "../scoring.js";
 import { openSheet } from "./sheet.js";
 import { openJumpVideo } from "./jump-video.js";
-import { openAngleMeter, ANGLE_TESTS } from "./angle-meter.js";
+import { openAngleVideo, VIDEO_ANGLE_TESTS } from "./angle-video.js";
 import { WARMUP, isMaxEffort, zonesForTest } from "../data/safety.js";
 import { PROTOCOLS } from "../data/protocols.js";
 import { JOINTS, SIDES, sidePhrase } from "../data/joints.js";
 import { icon, fmt, fmtDate, today, historyChart, levelChip, tierClass, toast, summary, parseNum } from "../ui.js";
 
 let editing = null; // id de la medición que se está editando
-let prefill = null; // valor que llega desde otra herramienta (salto por video: número; medidor de ángulos: { L, R })
+let prefill = null; // valor que llega desde otra herramienta (salto por video: número; ángulos por video: { L, R })
 
 export function openTestSheet(testId, opts = {}) {
   editing = null;
@@ -60,7 +60,7 @@ function render(root, testId) {
 
     ${test.timer ? timerBlock(test) : ""}
     ${testId === "vertJump" ? `<button type="button" class="btn secondary block video-measure" data-jump-video>${icon("video")} Medir con video (tiempo de vuelo)</button>` : ""}
-    ${ANGLE_TESTS[testId] ? `<button type="button" class="btn secondary block video-measure" data-angle-meter>${icon("target")} Medir con el celular (sin calcular nada)</button>` : ""}
+    ${VIDEO_ANGLE_TESTS[testId] ? `<button type="button" class="btn secondary block video-measure" data-angle-video>${icon("video")} Medir con video (la app calcula el ángulo)</button>` : ""}
 
     <form class="entry-form ${test.kind}">
       ${valueInputs(test)}
@@ -96,8 +96,8 @@ function render(root, testId) {
   root.querySelector("[data-jump-video]")?.addEventListener("click", () =>
     openJumpVideo((cm) => openTestSheet("vertJump", { prefill: cm }))
   );
-  root.querySelector("[data-angle-meter]")?.addEventListener("click", () =>
-    openAngleMeter(test, (sides) => openTestSheet(testId, { prefill: sides }))
+  root.querySelector("[data-angle-video]")?.addEventListener("click", () =>
+    openAngleVideo(test, (sides) => openTestSheet(testId, { prefill: sides }))
   );
   if (prefill != null) {
     const fill = (input, v) => {
