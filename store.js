@@ -156,6 +156,12 @@ export function planLog() {
   return state.profile?.planLog ?? [];
 }
 
+// Cómo te fue en una sesión hecha: "facil", "bien" o "duro" (ajusta la progresión del plan).
+export function setSessionFeel({ week, n, feel }) {
+  state.profile = { ...state.profile, planLog: planLog().map((l) => (l.week === week && l.n === n ? { ...l, feel } : l)) };
+  save();
+}
+
 export function toggleSession({ date, week, n }) {
   const log = planLog();
   const done = log.some((l) => l.week === week && l.n === n);
