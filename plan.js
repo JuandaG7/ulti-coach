@@ -19,6 +19,7 @@ import * as store from "./store.js";
 import { priorities, jointPriorities, testScore, wellness, target } from "./scoring.js";
 import { TESTS_BY_ID } from "./data/tests.js";
 import { categoryWeights, wantsInjuryPrevention, EQUIPMENT, SIZE } from "./data/plan-prefs.js";
+import { faultsFor, drillsFor, FAULTS_BY_ID } from "./data/throw-drills.js";
 
 // Impacto (saltos, aterrizajes, lanzamientos explosivos) y velocidad (sprints, frenadas, cortes).
 const IMPACT = /salto|pogo|aterriza|pliom|lanzamiento rotacional/i;
@@ -235,6 +236,11 @@ export function planReasons({ prefs, throwInfo, muscles, joints }) {
       detail: `Tú ${v(m, g.value)} (tus últimos ${throwInfo.n} videos) · pros ${range(m, g.band)}${muscle ? ` · fuerza: ${muscle.name.toLowerCase()}` : ""}`,
     });
   }
+  // Fallas que salen de cómo marcaste tus lanzamientos (aunque el video no las muestre).
+  const OUT = { tambaleo: "tambalearon", se_fue: "se fueron" };
+  for (const f of faultsFor({ outcomes: throwInfo?.outcomes })) {
+    out.push({ kind: "lanzamiento", score: null, title: `Tus lanzamientos · ${FAULTS_BY_ID[f.id].name.toLowerCase()}`, detail: `${f.why.count} ${OUT[f.why.outcome]} en tus últimos videos: el Taller de lanzamiento tiene ejercicios para eso` });
+  }
   for (const p of throwInfo?.progress ?? []) {
     const m = METRICS_BY_ID[p.metric];
     out.push({ kind: "mejora", score: p.scoreTo, title: `Mejoraste · ${m.name.toLowerCase()}`, detail: `De ${v(m, p.from)} a ${v(m, p.to)} (${p.scoreFrom} → ${p.scoreTo} pts)` });
@@ -271,6 +277,8 @@ export function weekPlan({ days = 3, mode = "casa", throwInfo = null, today }) {
   // × 1.5 si está detrás de una falla de tu forehand (p. ej. oblicuos si tus hombros giran tarde).
   const cw = categoryWeights(prefs);
   const throwGapsList = throwInfo?.gaps ?? [];
+  const faults = faultsFor({ gaps: throwGapsList, outcomes: throwInfo?.outcomes });
+  const custom = store.customDrills();
   const throwMuscles = new Set(throwGapsList.map((g) => g.muscle));
   const muscles = priorities()
     .filter((p) => !blocked.has(p.id))
@@ -356,20 +364,20 @@ export function weekPlan({ days = 3, mode = "casa", throwInfo = null, today }) {
     }
 
     // Lanzamiento: lo que más le falta a tu forehand; si no hay video pero es tu objetivo, ejercicios generales.
-    // Con 2 fallas, un ejercicio de cada una; con 1, sus ejercicios; sin video pero con el objetivo, generales.
-    if (throwOk && (throwGapsList.length || wantsThrow) && (i % 2 === 0 || days <= 2)) {
-      const sources = throwGapsList.length
-        ? throwGapsList.map((g) => ({ m: METRICS_BY_ID[g.metric], score: g.score }))
-        : [{ m: null, score: null }];
-      const generic = ["Snaps de forehand con toalla 3×20", "Lanzamiento rotacional con balón medicinal 3×8", "Pivot con paso largo y forehand 3×10"];
+    // Ejercicios del Taller de lanzamiento para tus fallas (hasta 2), rotando entre sesiones para no
+    // repetir siempre los mismos; primero los de tu coach. Sin fallas pero con el objetivo, generales.
+    if (throwOk && (faults.length || wantsThrow) && (i % 2 === 0 || days <= 2)) {
+      const sources = faults.length ? faults.slice(0, 2) : [{ id: "muneca", why: {} }, { id: "cadena", why: {} }];
       const items = [];
-      for (let round = 0; round < 3 && items.length < size.lanzamiento; round++) {
-        for (const { m, score } of sources) {
+      for (let round = 0; round < 4 && items.length < size.lanzamiento; round++) {
+        for (const f of sources) {
           if (items.length >= size.lanzamiento) break;
-          const d = (m?.drills ?? generic).filter((x) => !used.has(exKey(x)) && allowed(x))[0];
+          const list = drillsFor(f.id, custom).map((x) => x.drill).filter((x) => !used.has(exKey(x)) && allowed(x));
+          const d = list[(i + round) % Math.max(1, list.length)];
           if (!d) continue;
           used.add(exKey(d));
-          items.push(item(d, m ? `Tu forehand · ${m.name.toLowerCase()}` : "Tu objetivo: lanzar", score));
+          const gap = throwGapsList.find((g) => g.metric === f.why?.metric);
+          items.push(item(d, `Taller · ${FAULTS_BY_ID[f.id].name}${faults.length ? "" : " · tu objetivo: lanzar"}`, gap?.score ?? null));
         }
       }
       if (items.length) blocks.push({ kind: "lanzamiento", title: "Lanzamiento", items });
@@ -390,7 +398,7 @@ export function weekPlan({ days = 3, mode = "casa", throwInfo = null, today }) {
   if (injury && lowerHurt && stage < 3) notes.push({ level: "info", text: "Sin saltos ni sprints hasta la etapa 3 de tu vuelta." });
 
   const reasons = planReasons({ prefs, throwInfo, muscles, joints });
-  return { injury, stage, deload, wellness: w, level, measureDue, sessions, notes, reasons, prefs };
+  return { injury, stage, deload, wellness: w, level, measureDue, sessions, notes, reasons, prefs, faults };
 }
 
 // ---------- Registro de sesiones hechas ----------

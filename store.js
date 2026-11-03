@@ -156,6 +156,22 @@ export function planLog() {
   return state.profile?.planLog ?? [];
 }
 
+// Ejercicios de tu coach (Taller de lanzamiento): { id, name, fault, how }.
+export function customDrills() {
+  return state.profile?.customDrills ?? [];
+}
+
+export function saveCustomDrill(drill) {
+  const list = customDrills().filter((d) => d.id !== drill.id);
+  state.profile = { ...state.profile, customDrills: [...list, { id: crypto.randomUUID(), ...drill }] };
+  save();
+}
+
+export function removeCustomDrill(id) {
+  state.profile = { ...state.profile, customDrills: customDrills().filter((d) => d.id !== id) };
+  save();
+}
+
 // Cómo te fue en una sesión hecha: "facil", "bien" o "duro" (ajusta la progresión del plan).
 export function setSessionFeel({ week, n, feel }) {
   state.profile = { ...state.profile, planLog: planLog().map((l) => (l.week === week && l.n === n ? { ...l, feel } : l)) };

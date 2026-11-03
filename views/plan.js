@@ -6,11 +6,13 @@ import { STAGES } from "../data/return.js";
 import { weekKey } from "../data/checkin.js";
 import { weekPlan, stageCriteria, doneThisWeek, RETEST_DAYS } from "../plan.js";
 import { GOALS, FEELS, EQUIPMENT, MINUTES } from "../data/plan-prefs.js";
+import { FAULTS_BY_ID } from "../data/throw-drills.js";
 import { TESTS_BY_ID } from "../data/tests.js";
 import { analyzeForehand, throwGaps } from "../forehand.js";
 import { listClips } from "../clips.js";
 import { icon, today, tierClass, fmtDate } from "../ui.js";
 import { openSheet, closeSheet } from "./sheet.js";
+import { openTaller } from "./taller.js";
 import { bindDrills } from "./exercise-sheet.js";
 import { openTestSheet } from "./test-sheet.js";
 import { openCheckinSheet } from "./checkin.js";
@@ -27,11 +29,14 @@ let throwKey = null;
 async function loadThrowFocus(root) {
   try {
     const [pros, mine] = await Promise.all([listClips("pro"), listClips("mine")]);
-    const key = `${pros.map((c) => c.id).join()}|${mine.map((c) => `${c.id}:${c.shift ?? 0}`).join()}`;
+    const key = `${pros.map((c) => c.id).join()}|${mine.map((c) => `${c.id}:${c.shift ?? 0}:${c.outcome ?? ""}`).join()}`;
     if (key === throwKey) return;
     throwKey = key;
     const info = throwGaps(pros.map(analyzeForehand), mine.map(analyzeForehand));
-    throwInfo = info.gaps.length || info.progress.length ? info : null;
+    // Cómo marcaste tus últimos 10 lanzamientos (tambaleó / se fue): también señala fallas.
+    info.outcomes = {};
+    for (const c of mine.slice(0, 10)) if (c.outcome) info.outcomes[c.outcome] = (info.outcomes[c.outcome] ?? 0) + 1;
+    throwInfo = info.gaps.length || info.progress.length || Object.keys(info.outcomes).length ? info : null;
     if (root.isConnected) render(root);
   } catch (err) {
     console.error(err);
@@ -77,6 +82,15 @@ export function render(root) {
 
     ${reasonsCard(plan)}
 
+    <button type="button" class="card plan-card taller-entry" data-act="taller">
+      <span class="plan-card-icon">${icon("target")}</span>
+      <span class="plan-card-text">
+        <span class="eyebrow">Taller de lanzamiento</span>
+        <span class="small">${plan.faults.length ? `Para ti: ${plan.faults.map((f) => FAULTS_BY_ID[f.id].name.toLowerCase()).join(" y ")}` : "Ejercicios por falla y los de tu coach"}</span>
+      </span>
+      ${icon("chevron")}
+    </button>
+
     ${plan.notes.map((n) => `<div class="banner ${n.level === "yellow" ? "warn" : ""}">${icon("alert")}<span>${n.text}</span></div>`).join("")}
 
     ${plan.injury ? returnCard(plan.injury, date) : ""}
@@ -100,6 +114,7 @@ export function render(root) {
   root.querySelectorAll("[name=mode]").forEach((i) => i.addEventListener("change", () => store.saveProfile({ mode: i.value })));
   root.querySelectorAll("[name=minutes]").forEach((i) => i.addEventListener("change", () => savePrefs({ minutes: Number(i.value) })));
   root.querySelectorAll('[data-act="diagnosis"]').forEach((b) => b.addEventListener("click", openDiagnosis));
+  root.querySelector('[data-act="taller"]')?.addEventListener("click", () => openTaller({ mine: plan.faults }));
   root.querySelectorAll("[data-done]").forEach((b) => b.addEventListener("click", () => {
     justDone = Number(b.dataset.done);
     store.toggleSession({ date, week, n: justDone });

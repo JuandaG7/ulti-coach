@@ -1,5 +1,7 @@
 // Pruebas del análisis del forehand con lanzamientos sintéticos: un esqueleto armado a mano
 // donde sabemos la respuesta (cuándo gira la cadera, cuándo suelta, etc.).
+import { faultsFor, drillsFor, THROW_DRILLS } from "../data/throw-drills.js";
+import { findExercise } from "../data/exercises.js";
 import { analyzeForehand, trimAroundRelease, moveRelease, consistency, proBand, scoreVsPro, compareOutcomes, throwGaps } from "../forehand.js";
 
 // Función de distribución normal acumulada (aprox. de erf): convierte un pico de velocidad
@@ -204,6 +206,22 @@ test("Plan de lanzamiento: detecta que mejoraste frente a tus 5 videos anteriore
   const p = r.progress.find((x) => x.metric === "hipLead");
   ok(p, `no detectó la mejora (progress: ${r.progress.map((x) => x.metric).join(", ") || "nada"})`);
   ok(p.to > p.from, `de ${p.from} a ${p.to}`);
+});
+
+test("Taller: fallas desde el video y desde cómo marcaste tus lanzamientos", () => {
+  const f = faultsFor({ gaps: [{ metric: "hipLead" }, { metric: "trunkLead" }], outcomes: { tambaleo: 3, se_fue: 1 } });
+  const ids = f.map((x) => x.id).join(",");
+  ok(ids === "cadena,muneca", `fallas: ${ids} (cadera y hombros = una sola falla; 1 «se fue» no es patrón)`);
+});
+
+test("Taller: los ejercicios de tu coach van primero", () => {
+  const list = drillsFor("muneca", [{ id: "x", name: "Pelota contra la pared 3×20", fault: "muneca" }]);
+  ok(list[0].source === "coach", `primero: ${list[0].drill}`);
+});
+
+test("Taller: todos los ejercicios tienen instrucciones", () => {
+  const missing = THROW_DRILLS.filter((d) => !findExercise(d.drill)).map((d) => d.drill);
+  ok(!missing.length, `sin instrucciones: ${missing.join(", ")}`);
 });
 
 export { results };

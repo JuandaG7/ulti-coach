@@ -2,6 +2,7 @@
 import { findExercise } from "../data/exercises.js";
 import { openSheet } from "./sheet.js";
 import { icon } from "../ui.js";
+import { customDrills } from "../store.js";
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
@@ -20,6 +21,18 @@ export function bindDrills(root) {
 }
 
 function openExercise(drill) {
+  // Un ejercicio que agregaste tú (de tu coach) muestra tus propias instrucciones.
+  const mine = customDrills().find((d) => d.name === drill);
+  if (mine) {
+    openSheet((root) => {
+      root.innerHTML = `
+        <p class="eyebrow">Ejercicio de tu coach</p>
+        <h2 class="sheet-title">${esc(mine.name)}</h2>
+        ${mine.how ? `<p class="custom-how">${esc(mine.how)}</p>` : `<p class="muted">Sin instrucciones: agrégalas en el Taller de lanzamiento.</p>`}
+        <p class="muted small sheet-foot">Si sientes dolor (no cansancio) en una articulación, para y consúltalo con tu entrenador o fisio.</p>`;
+    });
+    return;
+  }
   const ex = findExercise(drill);
   openSheet((root) => {
     const dose = ex ? drill.slice(ex.name.length).trim() : "";

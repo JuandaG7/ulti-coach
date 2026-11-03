@@ -403,6 +403,92 @@ export const EXERCISES = {
     mov: "Sube los brazos formando una Y, luego una T, luego una W, con los pulgares hacia arriba.",
     error: "Encoger los hombros hacia las orejas: llévalos hacia atrás y abajo.",
   },
+  // ---------- Taller de lanzamiento (data/throw-drills.js) ----------
+  "Pelota de tenis al piso": {
+    pos: "De pie, una pelota de tenis en la mano de lanzar, tomada como el disco en tu forehand (dos dedos abajo). Codo cerca del cuerpo.",
+    mov: "Lánzala contra el piso, 1–2 m delante de ti, con un golpe seco de muñeca, como el final del forehand. Que rebote fuerte.",
+    error: "Lanzar con el brazo entero: el codo casi no se mueve, todo sale de la muñeca y el antebrazo.",
+  },
+  "Flick solo de muñeca": {
+    pos: "Un compañero o una pared a 5 m. Agarre de forehand y el codo pegado al cuerpo.",
+    mov: "Lanza sin mover el hombro ni el codo: solo muñeca y antebrazo. El disco tiene que salir plano y girando.",
+    error: "Si tambalea, el agarre está flojo: aprieta con el pulgar arriba y los dedos contra el borde.",
+  },
+  "Disco al aire con giro": {
+    pos: "De pie, disco con agarre de forehand, brazo relajado.",
+    mov: "Lanza el disco hacia arriba (1–2 m) solo con la muñeca para que gire rápido y plano, y atrápalo.",
+    error: "Que suba sin girar o inclinado: más golpe de muñeca y menos brazo.",
+  },
+  "Agarre firme con disco": {
+    pos: "Sostén el disco con tu agarre de forehand, el brazo colgando.",
+    mov: "Aprieta con dedos y pulgar y sacude el brazo suave: el disco no se debe mover en la mano.",
+    error: "Si el disco se mueve en la mano, así sale el tambaleo al lanzar.",
+  },
+  "Forehand con toalla bajo la axila": {
+    pos: "Una toalla pequeña doblada bajo la axila del brazo de lanzar. Compañero a 10 m.",
+    mov: "Forehands cortos sin que la toalla se caiga.",
+    error: "Si se cae, el codo se separó del cuerpo: estás lanzando solo con el brazo.",
+  },
+  "Forehand junto a la pared": {
+    pos: "De pie con el lado de lanzar junto a una pared, a un palmo de distancia.",
+    mov: "Arma y lanza (o simula el gesto) sin tocar la pared con el codo ni con la mano.",
+    error: "Tocar la pared = el codo va por detrás del cuerpo. El codo va adelante, cerca de la cadera.",
+  },
+  "Forehand con el codo guiando": {
+    pos: "Compañero a 10 m, agarre de forehand.",
+    mov: "Arranca el movimiento llevando el codo hacia adelante primero, con la mano atrás, y suelta al final, como un látigo.",
+    error: "Abrir la mano o la muñeca primero: el disco sale sin fuerza y hacia afuera.",
+  },
+  "Forehand de rodillas": {
+    pos: "Arrodillado en pasto, compañero a 10–15 m.",
+    mov: "Lanza girando el pecho y los hombros: sin piernas, sientes cómo el tronco y la muñeca hacen el trabajo.",
+    error: "Lanzar solo con el brazo: si el pecho no gira, el disco no llega.",
+  },
+  "Lanzamiento a dos tiempos": {
+    pos: "Compañero a 15 m, en tu posición de pivot.",
+    mov: "Primero gira la cadera hacia el objetivo y, un instante después, lanza. Exagera la separación entre los dos tiempos.",
+    error: "Hacer todo a la vez: la gracia es sentir que la cadera va primero.",
+  },
+  "Pivot con banda en la cintura": {
+    pos: "Una banda elástica alrededor de la cintura; un compañero o un poste la sujeta detrás de ti.",
+    mov: "Arma y gira la cadera hacia el objetivo contra la resistencia de la banda, con o sin soltar el disco.",
+    error: "Girar solo los hombros: la que tiene que arrancar es la cadera.",
+  },
+  "Pivot al cono": {
+    pos: "Un cono al lado de tu forehand, a una distancia algo mayor que un paso normal.",
+    mov: "Pivotea, toca el cono con el pie de paso y lanza desde ahí. Vuelve y repite.",
+    error: "Levantar o arrastrar el pie de pivot: queda fijo en el piso.",
+  },
+  "Pivot contra la marca": {
+    pos: "Un compañero te marca (sin tocar) y otro recibe.",
+    mov: "Finta con el pivot y lanza alrededor de la marca, alternando forehand y backhand.",
+    error: "Pivot corto: la marca te tapa. Paso largo y bajo.",
+  },
+  "Lanzar al blanco a 10 m": {
+    pos: "Un objetivo a 10 m: aro, cuadro marcado con conos o una silla.",
+    mov: "Lanza a la altura del pecho, siempre con el mismo ángulo. Cuenta cuántos entran.",
+    error: "Cambiar de ángulo en cada lanzamiento: primero consistencia, después potencia.",
+  },
+  "Final congelado": {
+    pos: "Compañero a 15 m.",
+    mov: "Después de soltar, quédate quieto 2 s con el brazo apuntando al objetivo y el peso sobre el pie de paso.",
+    error: "Caerte o recoger el brazo enseguida: si no puedes congelar el final, el disco se va.",
+  },
+  "Ángulos a propósito": {
+    pos: "Compañero a 15 m.",
+    mov: "Lanza 5 con el borde exterior hacia abajo y 5 con el borde interior hacia abajo, a propósito. Aprendes a controlar el ángulo.",
+    error: "Que todos salgan igual: exagera la diferencia para sentirla.",
+  },
+  "Pases con los ojos cerrados": {
+    pos: "Compañero quieto a 10 m. Míralo bien antes.",
+    mov: "Cierra los ojos y pásale el disco suave. Sientes el gesto sin corregir con la vista.",
+    error: "Lanzar fuerte: es un ejercicio de sensación, no de potencia.",
+  },
+  "Forehand con la otra mano": {
+    pos: "Compañero a 10 m.",
+    mov: "Forehands suaves con la mano que no usas. Obliga a pensar el gesto paso a paso.",
+    error: "Frustrarte: no importa que salgan mal; lo que entrenas es entender el movimiento.",
+  },
   // ---------- Vuelta tras lesión (data/return.js) ----------
   "Isométrico de pantorrilla": {
     pos: "De pie frente a una pared, manos apoyadas, sobre la pierna que se recupera.",

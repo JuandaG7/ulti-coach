@@ -934,3 +934,20 @@ progress { width: 100%; margin-top: 8px; accent-color: var(--accent); }
 .reasons li.improved strong { color: var(--t3); }
 .improved-mark { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--t3); color: var(--accent-ink); }
 .improved-mark .icon { width: 12px; height: 12px; }
+
+/* Taller de lanzamiento */
+.taller-entry { width: 100%; text-align: left; }
+.taller-fault { display: grid; gap: 6px; padding: 14px 0; border-top: 1px solid var(--border); }
+.taller-fault.mine { border-top-color: rgba(233, 223, 198, 0.35); }
+.taller-fault-name { font-family: var(--font-display); font-weight: 700; font-size: 1.15rem; margin: 0; }
+.taller-why { display: flex; gap: 6px; align-items: center; margin: 0; font-size: 0.88rem; font-weight: 600; color: var(--accent); }
+.taller-why .icon { width: 15px; height: 15px; }
+.taller-drills { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 8px; }
+.taller-drills li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.taller-source { font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 99px; background: var(--surface-2); color: var(--muted); }
+.taller-source.estudios { color: var(--t3); }
+.taller-source.coach { color: var(--t2); }
+.taller-form { display: grid; gap: 12px; }
+.taller-form select { min-height: 50px; width: 100%; padding: 0 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font: 500 1rem var(--font-body); }
+.taller-form textarea { width: 100%; resize: vertical; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; }
+.custom-how { white-space: pre-wrap; line-height: 1.5; }

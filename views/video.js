@@ -13,6 +13,8 @@ import { listClips, saveClip, updateClip, deleteClip } from "../clips.js";
 import { icon, levelChip, ring, today, fmtDate, tierClass, toast } from "../ui.js";
 import { drillChips, bindDrills } from "./exercise-sheet.js";
 import { openForehandGuide } from "./forehand-guide.js";
+import { openTaller } from "./taller.js";
+import { faultsFor } from "../data/throw-drills.js";
 
 const MAX_SECONDS = 20;
 const SPEEDS = [
@@ -107,6 +109,7 @@ function build() {
       <p class="muted small status" data-status="mine">Cargando modelo de pose…</p>
       <progress value="0" max="1" hidden data-progress="mine"></progress>
       <button type="button" class="btn ghost block" data-act="guide">${icon("target")} Cómo es un buen forehand</button>
+      <button type="button" class="btn ghost block" data-act="taller">${icon("zap")} Taller de lanzamiento</button>
     </section>
 
     <div class="fh-result" hidden data-result>
@@ -425,6 +428,7 @@ function wire() {
   el.addEventListener("click", async (e) => {
     if (e.target.closest('[data-act="open-lib"]')) return openLib();
     if (e.target.closest('[data-act="guide"]')) return openForehandGuide(current ? lastScores : {});
+    if (e.target.closest('[data-act="taller"]')) return openTaller({ mine: myFaults() });
     if (e.target.closest('[data-act="share-lib"]')) return shareLibrary();
     const del = e.target.closest("[data-del]");
     if (del) {
@@ -571,6 +575,15 @@ async function fixRelease(dt) {
   showClip(clip, live);
   paintLists();
   toast(`${icon("check")} ${clip.releaseLocked ? "Suelta marcada: recalculamos todo desde ese cuadro." : "De vuelta a la suelta automática."}`);
+}
+
+// Fallas que te tocan en el Taller: métricas de tu clip en pantalla lejos del rango pro y cómo
+// marcaste tus últimos 10 lanzamientos.
+function myFaults() {
+  const gaps = Object.entries(lastScores).filter(([, sc]) => sc != null && sc < 85).sort((a, b) => a[1] - b[1]).slice(0, 2).map(([metric]) => ({ metric }));
+  const outcomes = {};
+  for (const c of mine.slice(0, 10)) if (c.outcome) outcomes[c.outcome] = (outcomes[c.outcome] ?? 0) + 1;
+  return faultsFor({ gaps, outcomes });
 }
 
 function lock(on) {
