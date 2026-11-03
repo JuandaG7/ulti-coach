@@ -8,6 +8,7 @@ import { ring, bar, icon, levelChip, fmt, fmtDate, today, summary, lessButton, e
 import { openTestSheet } from "./test-sheet.js";
 import { drillChips, bindDrills } from "./exercise-sheet.js";
 import { openSheet, closeSheet } from "./sheet.js";
+import { openCheckinSheet } from "./checkin.js";
 
 export function render(root) {
   const mode = store.profile()?.mode ?? "casa";
@@ -21,7 +22,8 @@ export function render(root) {
     </header>
 
     ${active.map((i) => `
-      <div class="banner warn">${icon("alert")}<span>Lesión activa: <strong>${JOINTS[i.zone].name}${sidePhrase(i.side)}</strong>. No hagas pruebas ni ejercicios que te duelan en esa zona y sigue las indicaciones de tu fisio.</span></div>`).join("")}
+      <div class="banner warn injury-banner">${icon("alert")}<span>Lesión activa: <strong>${JOINTS[i.zone].name}${sidePhrase(i.side)}</strong>. No hagas pruebas ni ejercicios que te duelan en esa zona y sigue las indicaciones de tu fisio.
+        <button type="button" class="link" data-act="checkin">¿Cómo va el dolor? Actualízalo en tu check-in</button></span></div>`).join("")}
 
     <div class="joint-list">
       ${jointPriorities().map((p, i) => jointCard(p, i, mode)).join("")}
@@ -46,6 +48,7 @@ export function render(root) {
   bindDrills(root);
   exclusive(root.querySelectorAll("[data-acc]"));
   root.querySelector('[data-act="add-injury"]').addEventListener("click", () => openInjurySheet());
+  root.querySelectorAll('[data-act="checkin"]').forEach((b) => b.addEventListener("click", openCheckinSheet));
   root.querySelectorAll("[data-injury]").forEach((b) =>
     b.addEventListener("click", () => openInjurySheet(store.injuries().find((i) => i.id === b.dataset.injury)))
   );

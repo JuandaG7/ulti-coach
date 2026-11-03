@@ -93,7 +93,9 @@ function stepCard(checkin) {
     train: `<a class="btn primary block" href="#cuerpo/${step.muscleId}">${icon("body")} Ver ejercicios</a>`,
     starter: `<button class="btn primary block" data-test="${step.testId}">${icon("timer")} Medir ahora</button>`,
   }[step.kind];
-  if (step.kind === "starter") return starterCard(step, action);
+  // Si falta el check-in pero el paso de hoy es otro, igual queda un acceso a la vista.
+  const checkinLink = !checkin && step.kind !== "checkin" ? `<button type="button" class="link small checkin-link" data-act="checkin">${icon("heart")} También falta tu check-in de la semana (1 min)</button>` : "";
+  if (step.kind === "starter") return starterCard(step, action).replace(/<\/section>\s*$/, `${checkinLink}</section>`);
   return `
     <section class="card step-card">
       <p class="eyebrow">Tu siguiente paso</p>
@@ -101,6 +103,7 @@ function stepCard(checkin) {
       <p class="muted small">${step.text}</p>
       ${alert ? `<p class="step-alert">${icon("alert")}<span>${alert.text}</span></p>` : ""}
       ${action}
+      ${checkinLink}
     </section>`;
 }
 

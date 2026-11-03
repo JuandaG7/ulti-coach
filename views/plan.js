@@ -17,6 +17,7 @@ import { openTaller } from "./taller.js";
 import { bindDrills } from "./exercise-sheet.js";
 import { openTestSheet } from "./test-sheet.js";
 import { openCheckinSheet } from "./checkin.js";
+import { wellness } from "../scoring.js";
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const DAYS = [2, 3, 4, 5];
@@ -78,6 +79,8 @@ export function render(root) {
         <div class="segmented wide">${MINUTES.map((m) => `<label><input type="radio" name="minutes" value="${m}" ${m === (plan.prefs?.minutes ?? 45) ? "checked" : ""}><span>${m}</span></label>`).join("")}</div>
       </div>
     </section>
+
+    ${checkinRow(week)}
 
     ${tournamentCard(plan)}
 
@@ -181,6 +184,22 @@ function returnCard(injury, date) {
       ${stage > 1 ? `<button type="button" class="link" data-act="stage-back">Volver a la etapa ${stage - 1}</button>` : ""}
       <p class="muted small">Criterios estimados, adaptados a ultimate. Tu fisio tiene la última palabra.</p>
     </section>`;
+}
+
+// ---------- Check-in ----------
+// El plan depende del check-in (cansancio y dolor de la semana): siempre a la vista.
+function checkinRow(week) {
+  const c = store.checkinFor(week);
+  const pains = Object.entries(c?.pains ?? {}).filter(([, p]) => p > 0).map(([z, p]) => `${JOINTS[z].name.toLowerCase()} ${p}/10`);
+  return `
+    <button type="button" class="card checkin-row ${c ? "done" : ""}" data-act="checkin">
+      <span class="plan-card-icon">${icon(c ? "check" : "heart")}</span>
+      <span class="plan-card-text">
+        <span class="eyebrow">Check-in de esta semana</span>
+        <span class="small">${c ? `Hecho · bienestar ${wellness(c)}${pains.length ? ` · dolor: ${pains.join(", ")}` : " · sin dolor"}` : "Pendiente: 1 minuto. Con tu cansancio y tu dolor el plan se ajusta."}</span>
+      </span>
+      <span class="link small">${c ? "Editar" : "Hacer"}</span>
+    </button>`;
 }
 
 // ---------- Torneo ----------
