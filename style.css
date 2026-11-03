@@ -951,3 +951,17 @@ progress { width: 100%; margin-top: 8px; accent-color: var(--accent); }
 .taller-form select { min-height: 50px; width: 100%; padding: 0 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font: 500 1rem var(--font-body); }
 .taller-form textarea { width: 100%; resize: vertical; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; }
 .custom-how { white-space: pre-wrap; line-height: 1.5; }
+
+/* Torneo */
+.tournament-card { gap: 12px; box-shadow: inset 0 0 0 1px rgba(233, 223, 198, 0.3), var(--card-shadow); }
+.tournament-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.tournament-head p { margin: 0; }
+.tournament-count { margin: 0; display: flex; align-items: baseline; gap: 8px; }
+.tournament-count .num { font-size: 3rem; font-weight: 700; line-height: 1; color: var(--t4); }
+.phase-track { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.phase-track li { font-size: 0.72rem; font-weight: 600; text-align: center; padding: 6px 4px; border-radius: 8px; background: var(--surface-3); color: var(--muted); line-height: 1.15; }
+.phase-track li.past { background: rgba(107, 195, 138, 0.25); color: var(--text-2); }
+.phase-track li.now { background: var(--t2); color: #3d2603; }
+.guide-block .subhead { margin: 10px 0 6px; }
+.guide-items { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 0.92rem; color: var(--text-2); }
+.tournament-form { display: grid; gap: 14px; }

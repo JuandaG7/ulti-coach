@@ -128,6 +128,13 @@ function starterCard(step, action) {
     </section>`;
 }
 
+// "Torneo en 7 días", "Torneo · día 2", "Después del torneo".
+function tournamentLabel(t) {
+  if (t.phase === "torneo") return `Torneo · día ${t.day} de ${t.days}`;
+  if (t.phase === "recuperacion") return "Después del torneo · recuperación";
+  return `${t.name} en ${t.daysTo} día${t.daysTo > 1 ? "s" : ""}`;
+}
+
 // Tu siguiente sesión del plan (o la semana completa).
 function planCard() {
   const { plan, done, next } = nextSession();
@@ -136,9 +143,9 @@ function planCard() {
     <a class="card plan-card" href="#plan">
       <span class="plan-card-icon">${icon("calendar")}</span>
       <span class="plan-card-text">
-        <span class="eyebrow">Tu plan · ${done.size} de ${total} esta semana${plan.injury ? ` · Vuelta: etapa ${plan.stage}` : ""}</span>
-        <span class="step-title">${next ? `Día ${next.n}: ${next.title}` : "Semana completa"}</span>
-        <span class="muted small">${next ? `${next.blocks.reduce((n, b) => n + b.items.length, 0)} ejercicios armados con tus datos` : "Descansa y haz tu check-in del lunes."}</span>
+        <span class="eyebrow">${plan.tournament ? tournamentLabel(plan.tournament) : `Tu plan · ${done.size} de ${total} esta semana`}${plan.injury ? ` · Vuelta: etapa ${plan.stage}` : ""}</span>
+        <span class="step-title">${plan.phase === "torneo" ? `Día ${plan.tournament.day} de ${plan.tournament.name}` : next ? `${next.title.startsWith("Activación") || next.title.startsWith("Recuperación") ? "" : `Día ${next.n}: `}${next.title}` : "Semana completa"}</span>
+        <span class="muted small">${plan.phase === "torneo" ? "Abre la guía del día: calentamiento, entre partidos y tu molestia." : next ? `${next.blocks.reduce((n, b) => n + b.items.length, 0)} ejercicios armados con tus datos` : "Descansa y haz tu check-in del lunes."}</span>
       </span>
       ${icon("chevron")}
     </a>`;

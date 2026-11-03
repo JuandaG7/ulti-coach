@@ -156,6 +156,22 @@ export function planLog() {
   return state.profile?.planLog ?? [];
 }
 
+// Torneos: { id, name, start (YYYY-MM-DD), days }.
+export function tournaments() {
+  return [...(state.profile?.tournaments ?? [])].sort((a, b) => a.start.localeCompare(b.start));
+}
+
+export function saveTournament(t) {
+  const list = (state.profile?.tournaments ?? []).filter((x) => x.id !== t.id);
+  state.profile = { ...state.profile, tournaments: [...list, { id: crypto.randomUUID(), ...t }] };
+  save();
+}
+
+export function removeTournament(id) {
+  state.profile = { ...state.profile, tournaments: (state.profile?.tournaments ?? []).filter((x) => x.id !== id) };
+  save();
+}
+
 // Ejercicios de tu coach (Taller de lanzamiento): { id, name, fault, how }.
 export function customDrills() {
   return state.profile?.customDrills ?? [];

@@ -9,6 +9,9 @@
 //   músculos que importan para eso; tu equipo y tu tiempo deciden qué ejercicios y cuántos.
 // - Ejercicios que también son pruebas: se pueden medir ese día. Cada 3 semanas, una medición de tus falencias.
 // - Progresión: las dosis suben con las semanas completas y con cómo te fue (fácil / bien / muy duro).
+// - Torneo (data/tournament.js): específico a 6–2 semanas, puesta a punto (menos series, igual de
+//   rápido, una sesión menos) a 13–4 días, activación los 3 días antes, guía el día del torneo y
+//   recuperación los días después.
 import { MUSCLES } from "./data/muscles.js";
 import { JOINTS } from "./data/joints.js";
 import { STAGES, stageDrills, LOWER, ZONE_MUSCLES, SPORT_TEST } from "./data/return.js";
@@ -20,10 +23,11 @@ import { priorities, jointPriorities, testScore, wellness, target } from "./scor
 import { TESTS_BY_ID } from "./data/tests.js";
 import { categoryWeights, wantsInjuryPrevention, EQUIPMENT, SIZE } from "./data/plan-prefs.js";
 import { faultsFor, drillsFor, FAULTS_BY_ID } from "./data/throw-drills.js";
+import { tournamentPhase } from "./data/tournament.js";
 
 // Impacto (saltos, aterrizajes, lanzamientos explosivos) y velocidad (sprints, frenadas, cortes).
 const IMPACT = /salto|pogo|aterriza|pliom|lanzamiento rotacional/i;
-const SPEED = /sprint|frenada|cambios de direcci|cortes|huck/i;
+const SPEED = /sprint|frenada|cambios de direcci|cortes|huck|aceleraci/i;
 
 // El mismo ejercicio escrito distinto ("Plancha Copenhagen 3×20 s" y "… por lado") cuenta como uno.
 const exKey = (d) => (findExercise(d)?.name ?? d).toLowerCase();
@@ -252,16 +256,25 @@ export function planReasons({ prefs, throwInfo, muscles, joints }) {
 
 // throwInfo: { gaps, progress, n } de tu forehand (forehand.js · throwGaps; lo calcula la vista porque
 // los clips son asíncronos).
-export function weekPlan({ days = 3, mode = "casa", throwInfo = null, today }) {
+export function weekPlan({ days: daysWanted = 3, mode = "casa", throwInfo = null, today }) {
   const prefs = store.profile()?.planPrefs ?? null;
-  const size = SIZE[prefs?.minutes ?? 45];
+  // Torneo más cercano que todavía cuenta (por venir, en curso o recién terminado).
+  const tournament = store.tournaments().map((t) => {
+    const ph = tournamentPhase(t, today);
+    return ph && { ...t, ...ph };
+  }).find(Boolean) ?? null;
+  const phase = tournament?.phase ?? null;
+  const taper = phase === "puesta";
+  const specific = phase === "especifico";
+  const days = taper ? Math.max(2, daysWanted - 1) : daysWanted;
+  const size = taper ? { ...SIZE[prefs?.minutes ?? 45], fuerza: Math.min(2, SIZE[prefs?.minutes ?? 45].fuerza) } : SIZE[prefs?.minutes ?? 45];
   const injury = activeInjury();
   const stage = injury ? injury.rtpStage ?? 1 : null;
   const c = recentCheckin(today);
   const w = c ? wellness(c) : null;
   const deload = w != null && w < 50;
   const painful = Object.entries(c?.pains ?? {}).filter(([, p]) => p >= 4).map(([z]) => z);
-  const level = deload ? 0 : progressionLevel(days, today);
+  const level = deload || taper ? 0 : progressionLevel(days, today);
 
   const lowerHurt = (injury && LOWER.has(injury.zone)) || painful.some((z) => LOWER.has(z));
   const noImpact = deload || painful.some((z) => LOWER.has(z)) || (injury && LOWER.has(injury.zone) && stage < 3);
@@ -292,7 +305,7 @@ export function weekPlan({ days = 3, mode = "casa", throwInfo = null, today }) {
   const joints = jointPriorities().filter((j) => j.id !== injury?.zone).slice(0, 2);
   const throwOk = !(injury?.zone === "shoulder" && stage < 4) && !painful.includes("shoulder");
   const wantsThrow = (cw.lanzamiento ?? 0) > 0;
-  const wantsEndurance = (cw.resistencia ?? 0) > 0;
+  const wantsEndurance = (cw.resistencia ?? 0) > 0 || specific;
   const blindajeN = size.blindaje + (wantsInjuryPrevention(prefs) ? 1 : 0);
 
   // Medición: pruebas de tus falencias sin medir hace 3 semanas o más (máx. 3), el día 1.
@@ -304,14 +317,41 @@ export function weekPlan({ days = 3, mode = "casa", throwInfo = null, today }) {
       retest.push({ testId, reason: m.muscle.name, last: e ? daysSince(e.date, today) : null });
     }
   }
-  const measureDue = !deload && !injury && retest.length > 0;
+  const measureDue = !deload && !injury && retest.length > 0 && (!phase || phase === "construir" || phase === "especifico");
 
+  // En puesta a punto se baja una serie (como en descarga) pero se mantiene la intensidad.
   const item = (drill, reason, score) => {
-    const d = dose(drill, level, deload);
+    const d = dose(drill, level, deload || taper);
     return { drill: d, reason, score, testId: drillTest(d) };
   };
 
-  const sessions = Array.from({ length: days }, (_, i) => {
+  // Cuidado de la zona que más importa en los días de torneo: la lesionada, la que duele o la de más
+  // riesgo. Solo ejercicios suaves (isométricos y movilidad de la etapa 1): bajan la molestia sin cansar.
+  const zoneItems = (n) => {
+    if (injury) return stageDrills(1, injury.zone).slice(0, n).map((d) => ({ ...item(d, `Tu zona · ${JOINTS[injury.zone].name}`), score: null }));
+    const z = painful[0] ? { id: painful[0], joint: JOINTS[painful[0]], score: null } : joints[0];
+    if (!z) return [];
+    return (z.joint.drills[mode] ?? []).filter((d) => allowed(d) && !IMPACT.test(d)).slice(0, n).map((d) => item(d, `Blindaje · ${z.joint.name}`, z.score));
+  };
+
+  // Activación (1–3 días antes), torneo y recuperación: sesiones propias, cortas.
+  const special =
+    phase === "activacion" ? [{
+      n: 1, title: "Activación · 20 min", blocks: [
+        { kind: "activacion", title: "Activación", items: ["Trote continuo suave 5 min", "Movilidad dinámica 5 min", "Aceleraciones progresivas 3×20 m", "Cambios de dirección suaves 2× por lado", "Pases cortos de forehand y backhand 10 min"].filter(allowed).map((d) => item(d, "Despertar, no cansar", null)) },
+        { kind: "blindaje", title: "Tu zona", items: zoneItems(2) },
+      ].filter((b) => b.items.length),
+    }]
+    : phase === "torneo" ? []
+    : phase === "recuperacion" ? [1, 2].map((n) => ({
+      n, title: "Recuperación", blocks: [
+        { kind: "recuperacion", title: "Recuperación", items: ["Trote continuo suave 15–20 min", "Movilidad dinámica 10 min"].map((d) => item(d, "Soltar el cuerpo después del torneo", null)) },
+        { kind: "blindaje", title: "Tu zona", items: zoneItems(2) },
+      ].filter((b) => b.items.length),
+    }))
+    : null;
+
+  const sessions = special ?? Array.from({ length: days }, (_, i) => {
     const used = new Set();
     const pick = (list, test) => {
       const d = list.find((x) => !used.has(exKey(x)) && test(x));
@@ -331,6 +371,11 @@ export function weekPlan({ days = 3, mode = "casa", throwInfo = null, today }) {
     }
 
     // Potencia: un ejercicio explosivo por sesión, rotando entre los músculos con prioridad.
+    // En la fase específica para un torneo se suman cambios de dirección (lo que más se repite en un partido).
+    if (specific && !noSpeed) {
+      blocks.push({ kind: "potencia", title: "Específico de torneo", items: [item("Cambios de dirección al 90 % 6×", "Lo que más se repite en un partido", null)] });
+      used.add(exKey("Cambios de dirección al 90 % 6×"));
+    }
     if (!noImpact || !noSpeed) {
       for (let k = 0; k < muscles.length; k++) {
         const m = muscles[(i + k) % muscles.length];
@@ -393,12 +438,14 @@ export function weekPlan({ days = 3, mode = "casa", throwInfo = null, today }) {
   });
 
   const notes = [];
+  if (taper) notes.push({ level: "info", text: `Puesta a punto: faltan ${tournament.daysTo} días para ${tournament.name}. Una sesión menos y una serie menos en cada ejercicio, pero igual de rápido. Nada nuevo.` });
+  if (phase === "activacion") notes.push({ level: "info", text: `Faltan ${tournament.daysTo} día${tournament.daysTo > 1 ? "s" : ""}: solo activación, dormir 8 h o más y comer más carbohidratos.` });
   if (deload) notes.push({ level: "yellow", text: `Semana de descarga: tu check-in dio ${w} de bienestar. Una serie menos en cada ejercicio, sin llegar al fallo, y sin saltos ni sprints.` });
   for (const z of painful) notes.push({ level: "yellow", text: `Dolor en ${JOINTS[z].name.toLowerCase()} esta semana: quitamos los ejercicios que la cargan.` });
   if (injury && lowerHurt && stage < 3) notes.push({ level: "info", text: "Sin saltos ni sprints hasta la etapa 3 de tu vuelta." });
 
   const reasons = planReasons({ prefs, throwInfo, muscles, joints });
-  return { injury, stage, deload, wellness: w, level, measureDue, sessions, notes, reasons, prefs, faults };
+  return { injury, stage, deload, wellness: w, level, measureDue, sessions, notes, reasons, prefs, faults, tournament, phase };
 }
 
 // ---------- Registro de sesiones hechas ----------

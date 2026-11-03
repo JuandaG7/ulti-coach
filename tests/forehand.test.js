@@ -1,6 +1,7 @@
 // Pruebas del análisis del forehand con lanzamientos sintéticos: un esqueleto armado a mano
 // donde sabemos la respuesta (cuándo gira la cadera, cuándo suelta, etc.).
 import { faultsFor, drillsFor, THROW_DRILLS } from "../data/throw-drills.js";
+import { tournamentPhase } from "../data/tournament.js";
 import { findExercise } from "../data/exercises.js";
 import { analyzeForehand, trimAroundRelease, moveRelease, consistency, proBand, scoreVsPro, compareOutcomes, throwGaps } from "../forehand.js";
 
@@ -222,6 +223,19 @@ test("Taller: los ejercicios de tu coach van primero", () => {
 test("Taller: todos los ejercicios tienen instrucciones", () => {
   const missing = THROW_DRILLS.filter((d) => !findExercise(d.drill)).map((d) => d.drill);
   ok(!missing.length, `sin instrucciones: ${missing.join(", ")}`);
+});
+
+test("Torneo: la fase según cuánto falta (torneo del 10 al 12 de noviembre)", () => {
+  const t = { start: "2026-11-10", days: 3 };
+  const at = (today) => tournamentPhase(t, today);
+  const cases = [
+    ["2026-09-20", "construir"], ["2026-10-20", "especifico"], ["2026-11-03", "puesta"],
+    ["2026-11-08", "activacion"], ["2026-11-10", "torneo"], ["2026-11-12", "torneo"], ["2026-11-14", "recuperacion"],
+  ];
+  for (const [day, phase] of cases) ok(at(day)?.phase === phase, `${day}: ${at(day)?.phase} (esperaba ${phase})`);
+  ok(at("2026-11-03").daysTo === 7, `faltan ${at("2026-11-03").daysTo} días`);
+  ok(at("2026-11-11").day === 2, `día ${at("2026-11-11").day}`);
+  ok(at("2026-11-20") === null, "a la semana de terminar ya no cuenta");
 });
 
 export { results };

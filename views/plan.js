@@ -7,6 +7,7 @@ import { weekKey } from "../data/checkin.js";
 import { weekPlan, stageCriteria, doneThisWeek, RETEST_DAYS } from "../plan.js";
 import { GOALS, FEELS, EQUIPMENT, MINUTES } from "../data/plan-prefs.js";
 import { FAULTS_BY_ID } from "../data/throw-drills.js";
+import { PHASES, GUIDE, addDays } from "../data/tournament.js";
 import { TESTS_BY_ID } from "../data/tests.js";
 import { analyzeForehand, throwGaps } from "../forehand.js";
 import { listClips } from "../clips.js";
@@ -78,6 +79,8 @@ export function render(root) {
       </div>
     </section>
 
+    ${tournamentCard(plan)}
+
     ${diagnosisCard(plan.prefs)}
 
     ${reasonsCard(plan)}
@@ -95,9 +98,9 @@ export function render(root) {
 
     ${plan.injury ? returnCard(plan.injury, date) : ""}
 
-    <section class="plan-week">
+    ${plan.sessions.length ? `<section class="plan-week">
       <div class="section-title-row">
-        <h2 class="section-title">Esta semana</h2>
+        <h2 class="section-title">${plan.phase === "recuperacion" ? "Después del torneo" : plan.phase === "activacion" ? "Antes del torneo" : "Esta semana"}</h2>
         <span class="muted small num">${done.size} de ${plan.sessions.length} hechas</span>
       </div>
       <details class="card plan-warmup">
@@ -105,7 +108,7 @@ export function render(root) {
         <ol class="tips">${WARMUP.map((w) => `<li><strong>${w.title}.</strong> ${w.text}</li>`).join("")}</ol>
       </details>
       ${plan.sessions.map((s) => sessionCard(s, done.has(s.n), s === next, feels[s.n], date)).join("")}
-    </section>
+    </section>` : ""}
 
     <p class="muted small plan-foot">${icon("shield")} Si algo duele (no cansancio), para. El plan se arma con estimaciones: tu entrenador o fisio pueden ajustarlo.</p>
   `;
@@ -115,6 +118,8 @@ export function render(root) {
   root.querySelectorAll("[name=minutes]").forEach((i) => i.addEventListener("change", () => savePrefs({ minutes: Number(i.value) })));
   root.querySelectorAll('[data-act="diagnosis"]').forEach((b) => b.addEventListener("click", openDiagnosis));
   root.querySelector('[data-act="taller"]')?.addEventListener("click", () => openTaller({ mine: plan.faults }));
+  root.querySelectorAll('[data-act="tournament"]').forEach((b) => b.addEventListener("click", () => openTournamentForm(plan.tournament)));
+  root.querySelectorAll('[data-act="guide"]').forEach((b) => b.addEventListener("click", () => openGuide(plan.tournament)));
   root.querySelectorAll("[data-done]").forEach((b) => b.addEventListener("click", () => {
     justDone = Number(b.dataset.done);
     store.toggleSession({ date, week, n: justDone });
@@ -176,6 +181,92 @@ function returnCard(injury, date) {
       ${stage > 1 ? `<button type="button" class="link" data-act="stage-back">Volver a la etapa ${stage - 1}</button>` : ""}
       <p class="muted small">Criterios estimados, adaptados a ultimate. Tu fisio tiene la última palabra.</p>
     </section>`;
+}
+
+// ---------- Torneo ----------
+
+const fmtDay = (iso) => fmtDate(iso, { weekday: "long", day: "numeric", month: "short" });
+
+function tournamentCard(plan) {
+  const t = plan.tournament;
+  if (!t) {
+    return `
+      <button type="button" class="card plan-card" data-act="tournament">
+        <span class="plan-card-icon">${icon("calendar")}</span>
+        <span class="plan-card-text">
+          <span class="eyebrow">¿Tienes un torneo?</span>
+          <span class="small">Agrégalo y el plan se organiza para que llegues en tu mejor momento.</span>
+        </span>
+        ${icon("plus")}
+      </button>`;
+  }
+  const ph = PHASES[t.phase];
+  const big = t.phase === "torneo" ? `Día ${t.day}` : t.phase === "recuperacion" ? "Recuperación" : `${t.daysTo}`;
+  const small = t.phase === "torneo" ? `de ${t.days}` : t.phase === "recuperacion" ? `plan normal desde el ${fmtDate(t.backOn)}` : t.daysTo === 1 ? "día" : "días";
+  const steps = ["construir", "especifico", "puesta", "activacion", "torneo", "recuperacion"];
+  return `
+    <section class="card tournament-card">
+      <div class="tournament-head">
+        <div>
+          <p class="eyebrow">Torneo · ${esc(t.name)}</p>
+          <p class="small muted">${fmtDay(t.start)}${t.days > 1 ? ` al ${fmtDay(t.end)}` : ""}</p>
+        </div>
+        <button type="button" class="link small" data-act="tournament">Editar</button>
+      </div>
+      <p class="tournament-count"><span class="num">${big}</span> <span class="muted">${small}</span></p>
+      <ol class="phase-track">${steps.map((id) => `<li class="${id === t.phase ? "now" : steps.indexOf(id) < steps.indexOf(t.phase) ? "past" : ""}">${PHASES[id].name}</li>`).join("")}</ol>
+      <p class="small"><strong>${ph.name}:</strong> ${ph.text}</p>
+      ${t.phase === "torneo" ? guideList(["Cada mañana del torneo", "Antes de cada partido", "Entre partidos", "Al terminar cada día", "Tu molestia durante el torneo"]) : ""}
+      <button type="button" class="btn ${t.phase === "torneo" ? "secondary" : "primary"} block" data-act="guide">${icon("target")} Guía del torneo</button>
+    </section>`;
+}
+
+function guideList(titles) {
+  return GUIDE.filter((g) => titles.includes(g.title)).map((g) => `
+    <div class="guide-block">
+      <p class="subhead">${g.title}</p>
+      <ul class="guide-items">${g.items.map((x) => `<li>${x}</li>`).join("")}</ul>
+    </div>`).join("");
+}
+
+function openGuide(t) {
+  openSheet((root) => {
+    root.innerHTML = `
+      <p class="eyebrow">${t ? esc(t.name) : "Torneo"}</p>
+      <h2 class="sheet-title">Guía del torneo</h2>
+      ${guideList(GUIDE.map((g) => g.title))}
+      <p class="muted small">Recomendaciones generales de deportes de equipo; lo que diga tu fisio o tu nutricionista va primero.</p>`;
+  });
+}
+
+function openTournamentForm(existing) {
+  const t = existing ?? { name: "", start: addDays(today(), 14), days: 2 };
+  openSheet((root) => {
+    root.innerHTML = `
+      <p class="eyebrow">Plan</p>
+      <h2 class="sheet-title">${existing ? "Editar torneo" : "Agregar torneo"}</h2>
+      <form class="tournament-form">
+        <label class="field"><span>Nombre</span><input type="text" name="name" maxlength="40" required value="${esc(t.name)}" placeholder="Nacional de clubes"></label>
+        <label class="field"><span>Primer día</span><input type="date" name="start" required value="${t.start}" ${existing ? "" : `min="${today()}"`}></label>
+        <fieldset class="field"><legend>Cuántos días dura</legend>
+          <div class="segmented wide">${[1, 2, 3, 4].map((n) => `<label><input type="radio" name="days" value="${n}" ${n === Number(t.days) ? "checked" : ""}><span>${n}${n === 4 ? "+" : ""}</span></label>`).join("")}</div>
+        </fieldset>
+        <button type="submit" class="btn primary block">${icon("check")} Guardar</button>
+        ${existing ? `<button type="button" class="btn ghost block danger-text" data-act="del-tournament">${icon("trash")} Borrar torneo</button>` : ""}
+      </form>`;
+    const form = root.querySelector(".tournament-form");
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const d = new FormData(form);
+      store.saveTournament({ ...(existing ? { id: existing.id } : {}), name: d.get("name").trim(), start: d.get("start"), days: Number(d.get("days")) });
+      closeSheet();
+    });
+    root.querySelector('[data-act="del-tournament"]')?.addEventListener("click", () => {
+      if (!confirm("¿Borrar este torneo? El plan vuelve a ser el normal.")) return;
+      store.removeTournament(existing.id);
+      closeSheet();
+    });
+  });
 }
 
 // ---------- Diagnóstico ----------

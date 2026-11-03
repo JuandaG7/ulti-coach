@@ -403,6 +403,17 @@ export const EXERCISES = {
     mov: "Sube los brazos formando una Y, luego una T, luego una W, con los pulgares hacia arriba.",
     error: "Encoger los hombros hacia las orejas: llévalos hacia atrás y abajo.",
   },
+  // ---------- Torneos (activación y recuperación) ----------
+  "Movilidad dinámica": {
+    pos: "De pie, en un espacio libre.",
+    mov: "Balanceos de pierna adelante y de lado ×10, zancada con giro ×5 por lado, sentadilla profunda ×8, círculos de brazos ×10.",
+    error: "Hacerlo rápido y sin rango: el objetivo es llegar a las posiciones del juego sin rigidez.",
+  },
+  "Aceleraciones progresivas": {
+    pos: "Una recta de 20–30 m, ya trotaste unos minutos.",
+    mov: "Acelera hasta el 70 %, luego 80 % y luego 90 %, caminando de vuelta entre cada una.",
+    error: "Ir al 100 % desde la primera: estas son para despertar, no para cansar.",
+  },
   // ---------- Taller de lanzamiento (data/throw-drills.js) ----------
   "Pelota de tenis al piso": {
     pos: "De pie, una pelota de tenis en la mano de lanzar, tomada como el disco en tu forehand (dos dedos abajo). Codo cerca del cuerpo.",
